@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/oleglegun/static-site-templating-engine#readme",
   "dependencies": {
-    "js-yaml": "^3.13.1"
+    "js-yaml": "^3.13.1",
+    "mustache": "^3.2.1"
   }
 }
