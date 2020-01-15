@@ -1,24 +1,28 @@
 {
-  "name": "static-site-templating-engine",
-  "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/oleglegun/static-site-templating-engine.git"
-  },
-  "author": "Oleg Legun <oleg.legun@gmail.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/oleglegun/static-site-templating-engine/issues"
-  },
-  "homepage": "https://github.com/oleglegun/static-site-templating-engine#readme",
-  "dependencies": {
-    "js-yaml": "^3.13.1",
-    "mustache": "^3.2.1"
-  }
+    "name": "static-site-templating-engine",
+    "version": "0.0.1",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js",
+        "test": "tape test/**/*.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/oleglegun/static-site-templating-engine.git"
+    },
+    "author": "Oleg Legun <oleg.legun@gmail.com>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/oleglegun/static-site-templating-engine/issues"
+    },
+    "homepage": "https://github.com/oleglegun/static-site-templating-engine#readme",
+    "dependencies": {
+        "fs-extra": "^8.1.0",
+        "handlebars": "^4.7.2",
+        "js-yaml": "^3.13.1"
+    },
+    "devDependencies": {
+        "tape": "^4.13.0"
+    }
 }
