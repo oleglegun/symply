@@ -1,5 +1,3 @@
-# SYMPLY
-
 <div align="center">
     <img src="./symply-logo.jpg" width="50%"/>
 </div>
