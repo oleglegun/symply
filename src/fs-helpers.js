@@ -19,9 +19,9 @@ const promisify = require('util').promisify
  */
 function scanFiles(scanPath, readFileContents, removeScanPath, scanNestedDirectories) {
     if (removeScanPath) {
-        return scanFilesInDirectory(scanPath, '', readFileContents, scanNestedDirectories)
+        return scanFilesInDirectory(scanPath, scanPath, readFileContents, scanNestedDirectories)
     }
-    return scanFilesInDirectory(scanPath, scanPath, readFileContents, scanNestedDirectories)
+    return scanFilesInDirectory(scanPath, '', readFileContents, scanNestedDirectories)
 }
 
 /**
@@ -117,8 +117,11 @@ function createDirectoryIfNotExists(directoryPath) {
 function createFileIfNotExists(filePath, contents) {
     if (fs.existsSync(filePath)) {
         return false
+
     }
 
+    fs.ensureFileSync(filePath)
+    
     fs.writeFileSync(filePath, contents, { encoding: 'utf8' })
     return true
 }

@@ -30,7 +30,7 @@ const systemFilesToBeCreated = [
     {
         name: GLOBALS_FILE_NAME,
         dir: '.',
-        contents: 'module.exports = {\n\t\n}'
+        contents: 'module.exports = {\n\tsiteName: \'My new site\',\n}'
     }
 ]
 
@@ -92,5 +92,7 @@ function verifyConfiguration(configurationObject) {
 
 module.exports = {
     getConfiguration,
-    systemFilesToBeCreated
+    systemFilesToBeCreated,
+    GLOBALS_FILE_NAME,
+    HELPERS_FILE_NAME
 }

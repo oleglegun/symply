@@ -1,19 +1,25 @@
 const fs = require('fs')
 const path = require('path')
-const logger = require('./logger')
 const config = require('./config')
+const Handlebars = require('handlebars')
+const logger = require('./logger')
+const strings = require('./strings')
 const { loadPartials } = require('./partials')
 const { loadViews } = require('./views')
-const { loadTemplates } = require('./templates')
-const strings = require('./strings')
-const { scanFiles, isFileExtensionValid, getFileContents, createFileIfNotExists, createDirectoryIfNotExists } = require('./fs-helpers')
-
-const Handlebars = require('handlebars')
+const {
+    scanFiles,
+    isFileExtensionValid,
+    getFileContents,
+    createFileIfNotExists,
+    createDirectoryIfNotExists,
+    clearDirectoryContents,
+    copyFileAsync,
+} = require('./fs-helpers')
 
 const CONFIGURATION_FILE_NAME = 'configuration.yaml'
 
 async function main(command) {
-    command = 'init'
+    command = 'generate'
     switch (command) {
         case 'init':
             logger.info('Initializing project...')
@@ -21,14 +27,14 @@ async function main(command) {
             break
         case 'generate':
         case 'start':
-            generate()
+            await generate()
             break
         default:
             logger.log(strings.help)
     }
 }
 
-function generate() {
+async function generate() {
     /*-----------------------------------------------------------------------------
      *  Load configuration
      *----------------------------------------------------------------------------*/
@@ -36,7 +42,7 @@ function generate() {
     const configuration = config.getConfiguration(CONFIGURATION_FILE_NAME)
 
     /*-----------------------------------------------------------------------------
-     *  Register partials
+     *  Load and register partials
      *----------------------------------------------------------------------------*/
 
     const partials = loadPartials(configuration.PARTIALS_DIR_NAME)
@@ -46,24 +52,28 @@ function generate() {
     })
 
     /*-----------------------------------------------------------------------------
-     *  Load views
+     *  Load views and globals
      *----------------------------------------------------------------------------*/
 
     const views = loadViews(configuration.VIEWS_DIR_NAME)
-    // console.log(views)
+    const globals = require(path.join(process.cwd(), config.GLOBALS_FILE_NAME))
 
     /*-----------------------------------------------------------------------------
-     *  Register helpers
+     *  Load and register helpers; Inject views
      *----------------------------------------------------------------------------*/
 
-    if (fs.existsSync(configuration.HELPERS_FILE_NAME)) {
-        const helpersPath = path.join(process.cwd(), configuration.HELPERS_FILE_NAME)
+    if (fs.existsSync(config.HELPERS_FILE_NAME)) {
+        const helpersPath = path.join(process.cwd(), config.HELPERS_FILE_NAME)
         const helpers = require(helpersPath)
 
         Object.keys(helpers).forEach(helperName => {
             Handlebars.registerHelper(helperName, injectViewDataDecorator(helpers[helperName], views))
         })
     }
+
+    /*-----------------------------------------------------------------------------
+     *  Scan source files, detect template files for processing
+     *----------------------------------------------------------------------------*/
 
     const allSourceFiles = scanFiles(configuration.SOURCE_DIR_NAME, false, true, true)
 
@@ -75,14 +85,40 @@ function generate() {
         return !isFileExtensionValid(file.name, ['html'])
     })
 
+    /*-----------------------------------------------------------------------------
+     *  Compile templates passing globals and save to the distribution directory
+     *----------------------------------------------------------------------------*/
+
+    clearDirectoryContents(path.join(process.cwd(), configuration.DISTRIBUTION_DIR_NAME))
+
     templateSourceFiles.forEach(file => {
-        const templateContents = getFileContents(path.join(file.dirname, file.name))
-        const result = Handlebars.compile(templateContents)({})
-        console.log(result)
+        const templateContents = getFileContents(
+            path.join(process.cwd(), configuration.SOURCE_DIR_NAME, file.dirname, file.name)
+        )
+        const result = Handlebars.compile(templateContents)(globals)
+        if (
+            !createFileIfNotExists(
+                path.join(process.cwd(), configuration.DISTRIBUTION_DIR_NAME, file.dirname, file.name),
+                result
+            )
+        ) {
+            throw new Error('File already exists')
+        }
     })
 
-    // copy other source files to the destination folder
-    //
+    /*-----------------------------------------------------------------------------
+     *  Copy other source files to the distribution directory
+     *----------------------------------------------------------------------------*/
+
+    const copyPromises = []
+
+    otherSourceFiles.forEach(file => {
+        const srcFilePath = path.join(process.cwd(), configuration.SOURCE_DIR_NAME, file.dirname, file.name)
+        const distFilePath = path.join(process.cwd(), configuration.DISTRIBUTION_DIR_NAME, file.dirname, file.name)
+        copyPromises.push(copyFileAsync(srcFilePath, distFilePath))
+    })
+
+    await Promise.all(copyPromises)
 
     logger.info('Generation successfully finished.')
 }
@@ -128,7 +164,5 @@ function injectViewDataDecorator(helperFunction, views) {
         }
     }
 }
-
-function registerHelpers() {}
 
 module.exports = main
