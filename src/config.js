@@ -13,10 +13,30 @@ const {
 const DEFAULT_CONFIGURATION = {
     SOURCE_DIR_NAME: 'source',
     TEMPLATE_DIR_NAME: 'templates',
+    VIEWS_DIR_NAME: 'views',
     DISTRIBUTION_DIR_NAME: 'dist',
+    PARTIALS_DIR_NAME: 'partials',
 }
 
-exports.getConfiguration = function(configurationFilename) {
+const HELPERS_FILE_NAME = 'symply-helpers.js'
+const GLOBALS_FILE_NAME = 'symply-globals.js'
+
+const systemFilesToBeCreated = [
+    {
+        name: HELPERS_FILE_NAME,
+        dir: '.',
+        contents: 'module.exports = {\n\t\n}'
+    },
+    {
+        name: GLOBALS_FILE_NAME,
+        dir: '.',
+        contents: 'module.exports = {\n\t\n}'
+    }
+]
+
+
+
+ function getConfiguration(configurationFilename) {
     try {
         const configuration = yaml.safeLoad(
             fs.readFileSync(path.join(process.cwd(), configurationFilename), { encoding: 'utf8' })
@@ -68,4 +88,9 @@ function verifyConfiguration(configurationObject) {
             throw new MissingRequiredConfigurationOptionError(key, defaultConfigurationKeys)
         }
     })
+}
+
+module.exports = {
+    getConfiguration,
+    systemFilesToBeCreated
 }

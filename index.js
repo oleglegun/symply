@@ -1,12 +1,9 @@
 const logger = require('./src/logger')
 const main = require('./src/main')
+const { logo } = require('./src/strings')
 
-logger.log('=== Static Site Templating Engine ===')
+logger.log(logo)
 
-main()
-    .then(() => {
-        logger.info('Generation successfully finished.')
-    })
-    .catch(err => {
-        logger.error('Generation finished with error: ', err)
-    })
+main().catch(err => {
+    logger.error('Generation finished with error: ', err)
+})

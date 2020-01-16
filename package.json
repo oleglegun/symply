@@ -1,5 +1,5 @@
 {
-    "name": "static-site-templating-engine",
+    "name": "symply",
     "version": "0.0.1",
     "description": "",
     "main": "index.js",
@@ -9,14 +9,14 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/oleglegun/static-site-templating-engine.git"
+        "url": "git+https://https://github.com/oleglegun/symply.git"
     },
     "author": "Oleg Legun <oleg.legun@gmail.com>",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/oleglegun/static-site-templating-engine/issues"
+        "url": "https://github.com/oleglegun/symply/issues"
     },
-    "homepage": "https://github.com/oleglegun/static-site-templating-engine#readme",
+    "homepage": "https://github.com/oleglegun/symply#readme",
     "dependencies": {
         "fs-extra": "^8.1.0",
         "handlebars": "^4.7.2",
