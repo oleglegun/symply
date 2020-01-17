@@ -1,9 +1,15 @@
 ![Logo](./assets/logo.png)
 
-A dead-simple **Bootstrap static site generator** with minimum dependencies.
+A dead-simple **Bootstrap static site generator** with great flexibility and control.
+
+Main advantages:
+- Minimum magic - maximum transparency
+- Total control of the generation process
+- Only few dependencies
+
+**Symply** is based on well-known fast and reliable [Handlebars.js](https://github.com/wycats/handlebars.js) templating engine.
 
 Great for personal sites, landing pages and other small projects where you **want to be in control of everything**.
-
 
 ## Installation
 
@@ -13,47 +19,8 @@ Great for personal sites, landing pages and other small projects where you **wan
 
 ```shell
 symply init # generate file structure
+
+symply generate
 ```
 
-
-
-### Partials
-
-Parts that are meant to be used in many pages.
-
-`partials/menu.html`
-
-```html
-<div>
-    <ul>
-        <li>Page 1</li>
-        <li>Page 2</li>
-    </ul>
-</div>
-```
-
-`source/index.html`
-
-```html
-<body>
-    {{> menu }}
-</body>
-```
-
-Result
-`dist/index.html`
-
-```html
-<body>
-    <div>
-        <ul>
-            <li>Page 1</li>
-            <li>Page 2</li>
-        </ul>
-    </div>
-</body>
-```
-
-### Helper functions
-
-Custom functions that are used to generate html data. Can make HTTP requests to get any data needed.
+Coming soon...
