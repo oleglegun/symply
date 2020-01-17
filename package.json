@@ -19,7 +19,7 @@
     "main": "index.js",
     "scripts": {
         "start": "node index.js",
-        "test": "tape test/**/*.js"
+        "test": "tape test/**/*.js | tap-spec"
     },
     "dependencies": {
         "fs-extra": "^8.1.0",
@@ -28,6 +28,7 @@
         "prettier": "^1.19.1"
     },
     "devDependencies": {
+        "tap-spec": "^5.0.0",
         "tape": "^4.13.0"
     }
 }

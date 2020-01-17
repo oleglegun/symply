@@ -6,9 +6,9 @@ templates
 partials
 views
 
-
-
 configuration.yaml
 symply-helpers.js
 symply-context.js
 symply-globals.js
+
+TODO.md
