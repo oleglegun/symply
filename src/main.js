@@ -157,14 +157,18 @@ function initialize() {
         })
 }
 
-function injectViewDataDecorator(helperFunction, views) {
-    return function(context) {
-        const viewName = context && context.hash && context.hash.view
-        if (viewName) {
-            return new Handlebars.SafeString(helperFunction(views[viewName]))
-        } else {
-            return new Handlebars.SafeString(helperFunction(context))
-        }
+function injectHelperContextDecorator(helperFunction, views, globals) {
+    return function(...params) {
+        const passedArgs = params.slice(0, params.length - 1)
+        const data = params[params.length - 1]
+
+        const viewName = data.hash && data.hash.view
+
+        return new Handlebars.SafeString(
+            viewName
+                ? helperFunction(...passedArgs, { globals, params: data.hash, view: views[viewName] })
+                : helperFunction(...passedArgs, { globals, params: data.hash })
+        )
     }
 }
 
