@@ -14,6 +14,8 @@ const {
     createDirectoryIfNotExists,
     clearDirectoryContents,
     copyFileAsync,
+    createDirectoryAsync,
+    joinAndResolvePath,
 } = require('./fs-helpers')
 
 const CONFIGURATION_FILE_NAME = 'configuration.yaml'
@@ -113,9 +115,10 @@ async function generate() {
     const copyPromises = []
 
     otherSourceFiles.forEach(file => {
-        const srcFilePath = path.join(process.cwd(), configuration.SOURCE_DIR_NAME, file.dirname, file.name)
-        const distFilePath = path.join(process.cwd(), configuration.DISTRIBUTION_DIR_NAME, file.dirname, file.name)
-        copyPromises.push(copyFileAsync(srcFilePath, distFilePath))
+        const srcFilePath = joinAndResolvePath(configuration.SOURCE_DIR_NAME, file.dirname, file.name)
+        const fileDir = joinAndResolvePath(configuration.DISTRIBUTION_DIR_NAME, file.dirname)
+        const distFilePath = joinAndResolvePath(configuration.DISTRIBUTION_DIR_NAME, file.dirname, file.name)
+        copyPromises.push(createDirectoryAsync(fileDir).then(() => copyFileAsync(srcFilePath, distFilePath)))
     })
 
     await Promise.all(copyPromises)
