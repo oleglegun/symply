@@ -53,7 +53,7 @@ function scanFilesInDirectory(scanPath, basePath, readFileContents, scanNestedDi
 
             result.push({
                 name: filename,
-                dirname: path.dirname(basePath ? relativePath.replace(basePath + '/', '') : relativePath),
+                dirname: path.dirname(basePath ? relativePath.replace(basePath + path.sep, '') : relativePath),
                 contents: contents,
             })
         }
@@ -78,6 +78,14 @@ function isFileExtensionValid(fileName, validExtensionsList) {
         }
     }
     return false
+}
+/**
+ * 
+ * @param {*} dirPath 
+ */
+async function createDirectoryAsync(dirPath) {
+    console.log('---', dirPath)
+    return fs.ensureDir(dirPath)
 }
 
 async function copyFileAsync(filePath, destinationPath) {
@@ -117,13 +125,27 @@ function createDirectoryIfNotExists(directoryPath) {
 function createFileIfNotExists(filePath, contents) {
     if (fs.existsSync(filePath)) {
         return false
-
     }
 
     fs.ensureFileSync(filePath)
-    
+
     fs.writeFileSync(filePath, contents, { encoding: 'utf8' })
     return true
+}
+
+/**
+ * Joins path parts and returns an absolute path
+ * @param  {string[]} pathParts
+ * @returns {string}
+ */
+function joinAndResolvePath(...pathParts) {
+    const joinedPath = path.join(...pathParts)
+
+    if (path.isAbsolute(joinedPath)) {
+        return joinedPath
+    } else {
+        return path.join(process.cwd(), joinedPath)
+    }
 }
 
 module.exports = {
@@ -131,7 +153,9 @@ module.exports = {
     isFileExtensionValid,
     getFileContents,
     copyFileAsync,
+    createDirectoryAsync,
     clearDirectoryContents,
     createDirectoryIfNotExists,
     createFileIfNotExists,
+    joinAndResolvePath,
 }
