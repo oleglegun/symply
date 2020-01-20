@@ -1,0 +1,37 @@
+const path = require('path')
+const logger = require('./logger')
+const config = require('./config')
+const { createFileIfNotExists, createDirectoryIfNotExists } = require('./fs-helpers')
+
+function initialize() {
+    /*-----------------------------------------------------------------------------
+     *  Load configuration
+     *----------------------------------------------------------------------------*/
+
+    const configuration = config.getConfiguration()
+
+    /*-----------------------------------------------------------------------------
+     *  Create system files and directories
+     *----------------------------------------------------------------------------*/
+
+    config.systemFilesToBeCreated.forEach(file => {
+        const fileIsCreated = createFileIfNotExists(path.join(file.dir, file.name), file.contents)
+
+        if (fileIsCreated) {
+            logger.info('Created file ' + file.name)
+        }
+    })
+
+    Object.keys(configuration)
+        .filter(key => key.endsWith('DIR_NAME'))
+        .forEach(dirNameKey => {
+            const dirName = configuration[dirNameKey]
+            const dirIsCreated = createDirectoryIfNotExists(dirName)
+
+            if (dirIsCreated) {
+                logger.info(`Created directory: ${dirName}/`)
+            }
+        })
+}
+
+module.exports = initialize
