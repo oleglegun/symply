@@ -1,6 +1,8 @@
 const path = require('path')
 const { scanFiles } = require('./fs-helpers')
 
+// TODO add support for yaml and js formats
+// TODO add support for nested dir structure
 const VIEW_EXTENSION = '.json'
 
 /**
@@ -8,7 +10,8 @@ const VIEW_EXTENSION = '.json'
  */
 
 /**
- * @returns {Views}
+ * @param {string} viewsPath
+ * @return {Views}
  */
 function loadViews(viewsPath) {
     const views = scanFiles(viewsPath, true, false, false)
@@ -25,10 +28,10 @@ function loadViews(viewsPath) {
 /**
  *
  * @param {string} fileName
- * @returns {string}
+ * @return {string}
  */
 function getViewName(fileName) {
     return path.basename(fileName, VIEW_EXTENSION)
 }
 
-module.exports = {  loadViews }
+module.exports = { loadViews }

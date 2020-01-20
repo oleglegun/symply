@@ -15,7 +15,7 @@ const promisify = require('util').promisify
  * @param {boolean} readFileContents Read file contents into memory
  * @param {boolean} removeScanPath If true - scanPath will be removed from FileEntry.dirname.
  * @param {boolean} scanNestedDirectories
- * @returns {FileEntry[]}
+ * @return {FileEntry[]}
  */
 function scanFiles(scanPath, readFileContents, removeScanPath, scanNestedDirectories) {
     if (removeScanPath) {
@@ -84,7 +84,6 @@ function isFileExtensionValid(fileName, validExtensionsList) {
  * @param {*} dirPath 
  */
 async function createDirectoryAsync(dirPath) {
-    console.log('---', dirPath)
     return fs.ensureDir(dirPath)
 }
 
@@ -104,7 +103,7 @@ function getFileContents(filePath) {
  *
  * @param {string} directoryPath
  *
- * @returns {boolean} Returns true if the directory is created
+ * @return {boolean} Returns true if the directory is created
  */
 function createDirectoryIfNotExists(directoryPath) {
     if (fs.existsSync(directoryPath)) {
@@ -120,7 +119,7 @@ function createDirectoryIfNotExists(directoryPath) {
  * @param {string} filePath
  * @param {string} [contents]
  *
- * @returns {boolean} Returns true if the file is created
+ * @return {boolean} Returns true if the file is created
  */
 function createFileIfNotExists(filePath, contents) {
     if (fs.existsSync(filePath)) {
@@ -136,7 +135,7 @@ function createFileIfNotExists(filePath, contents) {
 /**
  * Joins path parts and returns an absolute path
  * @param  {string[]} pathParts
- * @returns {string}
+ * @return {string}
  */
 function joinAndResolvePath(...pathParts) {
     const joinedPath = path.join(...pathParts)

@@ -1,6 +1,7 @@
 const path = require('path')
 const { scanFiles } = require('./fs-helpers')
 
+// TODO: add support for md and txt formats
 const PARTIAL_EXTENTION = '.html'
 
 /**
@@ -24,7 +25,7 @@ function loadPartials(partialsPath) {
 /**
  *
  * @param {string} fileName
- * @returns {string}
+ * @return {string}
  */
 function getPartialName(fileName) {
     return path.basename(fileName, PARTIAL_EXTENTION)
