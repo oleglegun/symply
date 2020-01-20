@@ -1,6 +1,6 @@
 {
     "name": "symply",
-    "version": "0.0.3",
+    "version": "0.0.10",
     "description": "A dead-simple Bootstrap static site generator.",
     "author": "Oleg Legun <oleg.legun@gmail.com>",
     "homepage": "https://github.com/oleglegun/symply#readme",
@@ -24,8 +24,9 @@
     "dependencies": {
         "fs-extra": "^8.1.0",
         "handlebars": "^4.7.2",
-        "js-yaml": "^3.13.1",
-        "prettier": "^1.19.1"
+        "js-yaml": "3.13.1",
+        "prettier": "1.19.1",
+        "yargs": "15.1.0"
     },
     "devDependencies": {
         "eslint": "^6.8.0",

@@ -5,7 +5,6 @@ A dead-simple **Bootstrap static site generator** with great flexibility and con
 Main advantages:
 - Minimum magic - maximum transparency
 - Total control of the generation process
-- Only few dependencies
 
 **Symply** is based on well-known fast and reliable [Handlebars.js](https://github.com/wycats/handlebars.js) templating engine.
 
