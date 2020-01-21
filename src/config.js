@@ -14,7 +14,7 @@ const DEFAULT_CONFIGURATION = {
     DISTRIBUTION_DIR_NAME: 'dist',
     PARTIALS_DIR_NAME: 'partials',
     VIEWS_DIR_NAME: 'views',
-    TEMPLATES_DIR_NAME: 'templates',
+    LAYOUTS_DIR_NAME: 'layouts',
 
     // other options
     IGNORE_MISSING_PROPERTIES: false,

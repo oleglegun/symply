@@ -4,7 +4,7 @@ const logger = require('./logger')
 const prettier = require('prettier')
 const config = require('./config')
 const { loadPartials } = require('./partials')
-const { loadTemplates } = require('./templates')
+const { loadLayouts } = require('./layouts')
 const { loadViews } = require('./views')
 const {
     scanFiles,
@@ -17,11 +17,10 @@ const {
     joinAndResolvePath,
 } = require('./fs-helpers')
 
-
 async function generate() {
     const stats = {
         generatedFilesCount: 0,
-        copiedFilesCount: 0
+        copiedFilesCount: 0,
     }
 
     /*-----------------------------------------------------------------------------
@@ -41,12 +40,12 @@ async function generate() {
     })
 
     /*-----------------------------------------------------------------------------
-     *  Load views, templates and globals
+     *  Load views, layouts and globals
      *----------------------------------------------------------------------------*/
 
     const views = loadViews(configuration.VIEWS_DIR_NAME)
     const globals = require(joinAndResolvePath(config.GLOBALS_FILE_NAME))
-    const templates = loadTemplates(configuration.TEMPLATES_DIR_NAME)
+    const layouts = loadLayouts(configuration.LAYOUTS_DIR_NAME)
 
     /*-----------------------------------------------------------------------------
      *  Load and register helpers; Inject views
@@ -61,18 +60,19 @@ async function generate() {
         })
     }
 
-    Handlebars.registerHelper('template', injectHelperContextDecorator(templateHelper, views, globals))
-
-    function templateHelper(templateName, data) {
-        if (!templates[templateName]) {
-            logger.error(`Template '${templateName}' is not found in directory '${configuration.TEMPLATES_DIR_NAME}/'.`)
-            process.exit(1)
-        }
-        return templates[templateName].replace('{{}}', data.fn(this))
-    }
-
     if (!configuration.IGNORE_MISSING_PROPERTIES) {
         Handlebars.registerHelper('helperMissing', missingHelperOrPropertyHandler)
+    }
+
+    Handlebars.registerHelper('layout', layoutHelper)
+
+    function layoutHelper(layoutName, data) {
+        if (!layouts[layoutName]) {
+            logger.error(`Layout '${layoutName}' is not found in directory '${configuration.LAYOUTS_DIR_NAME}/'.`)
+            process.exit(1)
+        }
+
+        return Handlebars.compile(layouts[layoutName].replace('{{}}', data.fn(this)))(globals)
     }
 
     /*-----------------------------------------------------------------------------
@@ -140,7 +140,7 @@ async function generate() {
     })
 
     stats.copiedFilesCount += copyPromises.length
-    
+
     await Promise.all(copyPromises)
 
     return stats
@@ -170,10 +170,11 @@ function injectHelperContextDecorator(helperFunction, views, globals) {
 
 function missingHelperOrPropertyHandler(data) {
     Object.keys(data).forEach(item => {
+        // logger.log(data)
         const message = 'Missing helper or property: ' + data.name
         logger.error(message)
         process.exit(1)
-        throw new Error(message)
+        // throw new Error(message)
     })
 }
 
