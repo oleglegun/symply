@@ -1,6 +1,6 @@
 {
     "name": "symply",
-    "version": "0.0.10",
+    "version": "0.0.12",
     "description": "A dead-simple Bootstrap static site generator.",
     "author": "Oleg Legun <oleg.legun@gmail.com>",
     "homepage": "https://github.com/oleglegun/symply#readme",

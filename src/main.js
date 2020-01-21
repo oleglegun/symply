@@ -1,13 +1,13 @@
 const yargs = require('yargs')
 const logger = require('./logger')
-const strings = require('./strings')
+const { printLogo } = require('./logo')
 const version = require('../package').version
 const initialize = require('./initialize')
 const generate = require('./generate')
 const { Commands } = require('./cli-commands')
 
 function main() {
-    logger.log(strings.logo)
+    printLogo(process.stdout.columns)
 
     try {
         yargs
