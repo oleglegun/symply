@@ -162,8 +162,8 @@ function injectHelperContextDecorator(helperFunction, views, globals) {
 
         return new Handlebars.SafeString(
             viewName
-                ? helperFunction(...passedArgs, { globals, params: data.hash, view: views[viewName], fn })
-                : helperFunction(...passedArgs, { globals, params: data.hash, fn })
+                ? helperFunction(...passedArgs, { globals, hash: data.hash, view: views[viewName], fn })
+                : helperFunction(...passedArgs, { globals, hash: data.hash, fn })
         )
     }
 }
