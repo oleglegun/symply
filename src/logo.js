@@ -1,4 +1,7 @@
 const logger = require('./logger')
+const chalk = require('chalk')
+
+const LOGO_COLOR = '#af00ff'
 
 const LOGO = {
     width60: `
@@ -11,11 +14,11 @@ const LOGO = {
     ======= Bootstrap Static Site Generator =======
 `,
     width50: `
-█████╗ ███████╗ ██╗     ██╗ █████╗  ██╗  ███████╗
-██▌/═╝  █████╔╝ ███╗   ███║ ██╔═██╗ ██║   █████╔╝
-╚/▐██║    █╔═╝  ████╗ ████║ █████╔╝ ██║     █╔═╝ 
-█████║    █║    ██████████║ ██╔══╝  ██████╗ █║   
-╚════╝    ╚╝    ╚═════════╝ ╚═╝     ╚═════╝ ╚╝   
+█████╗ ███████╗ ██╗     ██╗ █████╗  ██╗   ███████╗
+██▌/═╝  █████╔╝ ███╗   ███║ ██╔═██╗ ██║    █████╔╝
+╚/▐██║   ▐█▌╔╝  ████╗ ████║ █████╔╝ ██║     ▐█▌╔╝ 
+█████║   ▐█▌║   ██████████║ ██╔══╝  ██████╗ ▐█▌║  
+╚════╝    ╚═╝   ╚═════════╝ ╚═╝     ╚═════╝  ╚═╝  
    ==== Bootstrap Static Site Generator ====
 `,
     width40: `
@@ -41,19 +44,22 @@ const LOGO = {
 }
 
 function printLogo(targetWidth) {
+    let logo
     if (targetWidth >= 60) {
-        logger.log(addPaddingToCenterLogo(LOGO.width60, 60, targetWidth))
+        logo = addPaddingToCenterLogo(LOGO.width60, 60, targetWidth)
     } else if (targetWidth >= 50) {
-        logger.log(addPaddingToCenterLogo(LOGO.width50, 50, targetWidth))
+        logo = addPaddingToCenterLogo(LOGO.width50, 50, targetWidth)
     } else if (targetWidth >= 40) {
-        logger.log(addPaddingToCenterLogo(LOGO.width40, 40, targetWidth))
+        logo = addPaddingToCenterLogo(LOGO.width40, 40, targetWidth)
     } else if (targetWidth >= 30) {
-        logger.log(addPaddingToCenterLogo(LOGO.width30, 30, targetWidth))
+        logo = addPaddingToCenterLogo(LOGO.width30, 30, targetWidth)
     } else if (targetWidth >= 20) {
-        logger.log(addPaddingToCenterLogo(LOGO.width20, 20, targetWidth))
+        logo = addPaddingToCenterLogo(LOGO.width20, 20, targetWidth)
     } else {
-        logger.log('=== SYMPLY ===')
+        logo = '=== SYMPLY ==='
     }
+
+    logger.log(chalk.hex(LOGO_COLOR)(logo))
 }
 
 /**

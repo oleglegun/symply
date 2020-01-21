@@ -1,11 +1,13 @@
 const fs = require('fs')
+const chalk = require('chalk')
+const ProgressBar = require('progress')
 const Handlebars = require('handlebars')
-const logger = require('./logger')
+const logger = require('../logger')
 const prettier = require('prettier')
-const config = require('./config')
-const { loadPartials } = require('./partials')
-const { loadLayouts } = require('./layouts')
-const { loadViews } = require('./views')
+const config = require('../config')
+const { loadPartials } = require('../partials')
+const { loadLayouts } = require('../layouts')
+const { loadViews } = require('../views')
 const {
     scanFiles,
     isFileExtensionValid,
@@ -15,7 +17,7 @@ const {
     copyFileAsync,
     createDirectoryAsync,
     joinAndResolvePath,
-} = require('./fs-helpers')
+} = require('../fs-helpers')
 
 async function generate() {
     const stats = {
@@ -90,6 +92,18 @@ async function generate() {
     })
 
     /*-----------------------------------------------------------------------------
+     *  Initialize Progress Bar
+     *----------------------------------------------------------------------------*/
+
+    const compilationProgressBar = new ProgressBar('Compiling files: [:bar] :current/:total', {
+        total: templateSourceFiles.length,
+        width: 20,
+        complete: chalk.yellow('■'),
+        incomplete: ' ',
+        clear: true,
+    })
+
+    /*-----------------------------------------------------------------------------
      *  Compile templates with passing globals
      *  Format HTML output
      *  Save results to the distribution directory
@@ -107,6 +121,7 @@ async function generate() {
         try {
             const result = Handlebars.compile(templateContents)(globals)
             formattedHTML = prettier.format(result, { parser: 'html' })
+            compilationProgressBar.tick()
             stats.generatedFilesCount++
         } catch (err) {
             if (err instanceof RangeError) {
@@ -136,7 +151,11 @@ async function generate() {
         const srcFilePath = joinAndResolvePath(configuration.SOURCE_DIR_NAME, file.dirname, file.name)
         const fileDir = joinAndResolvePath(configuration.DISTRIBUTION_DIR_NAME, file.dirname)
         const distFilePath = joinAndResolvePath(configuration.DISTRIBUTION_DIR_NAME, file.dirname, file.name)
-        copyPromises.push(createDirectoryAsync(fileDir).then(() => copyFileAsync(srcFilePath, distFilePath)))
+        copyPromises.push(
+            createDirectoryAsync(fileDir).then(() => {
+                return copyFileAsync(srcFilePath, distFilePath)
+            })
+        )
     })
 
     stats.copiedFilesCount += copyPromises.length

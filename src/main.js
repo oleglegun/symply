@@ -2,9 +2,12 @@ const yargs = require('yargs')
 const logger = require('./logger')
 const { printLogo } = require('./logo')
 const version = require('../package').version
-const initialize = require('./initialize')
-const generate = require('./generate')
+const initialize = require('./commands/initialize')
+const generate = require('./commands/generate')
 const { Commands } = require('./cli-commands')
+
+// Check for updates
+require('./update-notifier')
 
 function main() {
     printLogo(process.stdout.columns)

@@ -1,7 +1,7 @@
 const path = require('path')
-const logger = require('./logger')
-const config = require('./config')
-const { createFileIfNotExists, createDirectoryIfNotExists } = require('./fs-helpers')
+const logger = require('../logger')
+const config = require('../config')
+const { createFileIfNotExists, createDirectoryIfNotExists } = require('../fs-helpers')
 
 function initialize() {
     /*-----------------------------------------------------------------------------

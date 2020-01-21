@@ -22,10 +22,13 @@
         "test": "tape test/**/*.js | tap-spec"
     },
     "dependencies": {
+        "chalk": "^3.0.0",
         "fs-extra": "^8.1.0",
         "handlebars": "^4.7.2",
         "js-yaml": "3.13.1",
         "prettier": "1.19.1",
+        "progress": "^2.0.3",
+        "update-notifier": "^4.0.0",
         "yargs": "15.1.0"
     },
     "devDependencies": {
