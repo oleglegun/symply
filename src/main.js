@@ -13,17 +13,21 @@ function main() {
         yargs
             .usage('Usage: $0 <command> [option]')
             .strict()
+
             /*-----------------------------------------------------------------------------
              *  Init
              *----------------------------------------------------------------------------*/
+
             .command([Commands.INIT.name], Commands.INIT.description, {}, args => {
                 logger.info('Initializing project...')
                 initialize()
                 logger.info('Initialization successfully done.')
             })
+
             /*-----------------------------------------------------------------------------
              *  Generate
              *----------------------------------------------------------------------------*/
+
             .command([Commands.GENERATE.name, Commands.GENERATE.alias], Commands.GENERATE.description, {}, args => {
                 const start = Date.now()
                 logger.info('Generating static files...')
@@ -38,27 +42,34 @@ function main() {
                         throw err
                     })
             })
+
             /*-----------------------------------------------------------------------------
              *  Serve
              *----------------------------------------------------------------------------*/
+
             .command([Commands.SERVE.name], Commands.SERVE.description, {}, args => {
                 logger.info('Not implemented yet...')
             })
+
             /*-----------------------------------------------------------------------------
              *  Configuration
              *----------------------------------------------------------------------------*/
+
             .command([Commands.CONFIGURATION.name], Commands.CONFIGURATION.description, {}, args => {
                 logger.info('Not implemented yet...')
             })
+
             /*-----------------------------------------------------------------------------
              *  Bootstrap
              *----------------------------------------------------------------------------*/
             .command([Commands.BOOTSTRAP.name], Commands.BOOTSTRAP.description, {}, args => {
                 logger.info('Not implemented yet...')
             })
+
             /*-----------------------------------------------------------------------------
              *  Help
              *----------------------------------------------------------------------------*/
+
             .command([Commands.HELP.name, Commands.HELP.alias], Commands.HELP.description, {}, args => {
                 logger.info('Not implemented yet...')
             })
