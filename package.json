@@ -1,6 +1,6 @@
 {
     "name": "symply",
-    "version": "0.0.12",
+    "version": "0.0.14",
     "description": "A dead-simple Bootstrap static site generator.",
     "author": "Oleg Legun <oleg.legun@gmail.com>",
     "homepage": "https://github.com/oleglegun/symply#readme",
@@ -22,13 +22,18 @@
         "test": "tape test/**/*.js | tap-spec"
     },
     "dependencies": {
-        "chalk": "^3.0.0",
-        "fs-extra": "^8.1.0",
-        "handlebars": "^4.7.2",
+        "@babel/core": "7.8.3",
+        "@babel/preset-react": "7.8.3",
+        "better-opn": "1.0.0",
+        "chalk": "3.0.0",
+        "fs-extra": "8.1.0",
+        "handlebars": "4.7.2",
         "js-yaml": "3.13.1",
         "prettier": "1.19.1",
-        "progress": "^2.0.3",
-        "update-notifier": "^4.0.0",
+        "progress": "2.0.3",
+        "react": "^16.12.0",
+        "react-dom": "^16.12.0",
+        "update-notifier": "4.0.0",
         "yargs": "15.1.0"
     },
     "devDependencies": {

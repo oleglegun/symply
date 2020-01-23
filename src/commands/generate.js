@@ -1,13 +1,21 @@
 const fs = require('fs')
+
+const babel = require('@babel/core')
+const babelReactPreset = require('@babel/preset-react')
 const chalk = require('chalk')
-const ProgressBar = require('progress')
 const Handlebars = require('handlebars')
+const ProgressBar = require('progress')
+const React = require('react') // eslint-disable-line
+const ReactDOMServer = require('react-dom/server')
+
 const logger = require('../logger')
 const prettier = require('prettier')
 const config = require('../config')
 const { loadPartials } = require('../partials')
 const { loadLayouts } = require('../layouts')
 const { loadViews } = require('../views')
+const string = require('../strings')
+
 const {
     scanFiles,
     isFileExtensionValid,
@@ -55,10 +63,13 @@ async function generate() {
 
     if (fs.existsSync(config.HELPERS_FILE_NAME)) {
         const helpersPath = joinAndResolvePath(config.HELPERS_FILE_NAME)
-        const helpers = require(helpersPath)
+        const helpersCode = getFileContents(helpersPath)
+        const transpileResult = babel.transformSync(helpersCode, { presets: [babelReactPreset] })
+        const transpiledHelpers = eval(transpileResult.code)
 
-        Object.keys(helpers).forEach(helperName => {
-            Handlebars.registerHelper(helperName, injectHelperContextDecorator(helpers[helperName], views, globals))
+        Object.keys(transpiledHelpers).forEach(helperName => {
+            const helperFunc = renderJsxToStringDecorator(transpiledHelpers[helperName])
+            Handlebars.registerHelper(helperName, injectHelperContextDecorator(helperFunc, views, globals))
         })
     }
 
@@ -69,12 +80,26 @@ async function generate() {
     Handlebars.registerHelper('layout', layoutHelper)
 
     function layoutHelper(layoutName, data) {
+        if (!data) {
+            logger.error(`Layout name is not passed.`)
+            logger.log(string.layouts.usage)
+            process.exit(1)
+        }
+
+        if (!data.fn) {
+            logger.error(`Layout does not support any non Key-Value parameters.`)
+            logger.log(string.layouts.usage)
+            process.exit(1)
+        }
+
         if (!layouts[layoutName]) {
             logger.error(`Layout '${layoutName}' is not found in directory '${configuration.LAYOUTS_DIR_NAME}/'.`)
             process.exit(1)
         }
 
-        return Handlebars.compile(layouts[layoutName].replace('{{}}', data.fn(this)))(globals)
+        return Handlebars.compile(layouts[layoutName].replace('{{}}', data.fn(this)))(
+            Object.assign({}, globals, data.hash) // pass hash parameters to the layout
+        )
     }
 
     /*-----------------------------------------------------------------------------
@@ -165,12 +190,6 @@ async function generate() {
     return stats
 }
 
-/**
- *
- * @param {(...args:Object[])=> {}} helperFunction
- * @param {Object<string, string>} views
- * @param {Object} globals
- */
 function injectHelperContextDecorator(helperFunction, views, globals) {
     return function(...args) {
         const passedArgs = args.slice(0, args.length - 1)
@@ -184,6 +203,18 @@ function injectHelperContextDecorator(helperFunction, views, globals) {
                 ? helperFunction(...passedArgs, { globals, hash: data.hash, view: views[viewName], fn })
                 : helperFunction(...passedArgs, { globals, hash: data.hash, fn })
         )
+    }
+}
+
+function renderJsxToStringDecorator(fn) {
+    return function(...args) {
+        let result = fn(...args)
+
+        if (result && typeof result !== 'string' && result.$$typeof === Symbol.for('react.element')) {
+            result = ReactDOMServer.renderToStaticMarkup(result)
+        }
+
+        return result
     }
 }
 
