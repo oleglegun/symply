@@ -1,9 +1,12 @@
+// @ts-nocheck
 const yargs = require('yargs')
 const logger = require('./logger')
 const { printLogo } = require('./logo')
+// @ts-ignore
 const version = require('../package').version
 const initialize = require('./commands/initialize')
 const generate = require('./commands/generate')
+const serve = require('./commands/serve')
 const { Commands } = require('./cli-commands')
 
 // Check for updates
@@ -20,7 +23,6 @@ function main() {
             /*-----------------------------------------------------------------------------
              *  Init
              *----------------------------------------------------------------------------*/
-
             .command([Commands.INIT.name], Commands.INIT.description, {}, args => {
                 logger.info('Initializing project...')
                 initialize()
@@ -30,18 +32,17 @@ function main() {
             /*-----------------------------------------------------------------------------
              *  Generate
              *----------------------------------------------------------------------------*/
-
             .command([Commands.GENERATE.name, Commands.GENERATE.alias], Commands.GENERATE.description, {}, args => {
                 const start = Date.now()
                 logger.info('Generating static files...')
                 generate()
-                    .then(stats => {
+                    .then((stats: Symply.GenerationStats) => {
                         logger.info(
                             `Generated ${stats.generatedFilesCount} files. Copied ${stats.copiedFilesCount} files.`
                         )
                         logger.info(`Generation successfully finished in ${Date.now() - start} ms.`)
                     })
-                    .catch(err => {
+                    .catch((err: Error) => {
                         throw err
                     })
             })
@@ -49,15 +50,13 @@ function main() {
             /*-----------------------------------------------------------------------------
              *  Serve
              *----------------------------------------------------------------------------*/
-
             .command([Commands.SERVE.name], Commands.SERVE.description, {}, args => {
-                logger.info('Not implemented yet...')
+                serve().then()
             })
 
             /*-----------------------------------------------------------------------------
              *  Configuration
              *----------------------------------------------------------------------------*/
-
             .command([Commands.CONFIGURATION.name], Commands.CONFIGURATION.description, {}, args => {
                 logger.info('Not implemented yet...')
             })
@@ -72,7 +71,6 @@ function main() {
             /*-----------------------------------------------------------------------------
              *  Help
              *----------------------------------------------------------------------------*/
-
             .command([Commands.HELP.name, Commands.HELP.alias], Commands.HELP.description, {}, args => {
                 logger.info('Not implemented yet...')
             })

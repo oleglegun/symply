@@ -1,3 +1,5 @@
-bin/
-test/
-dist/
+bin
+test
+dist
+node_modules
+examples

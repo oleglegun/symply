@@ -1,3 +1,6 @@
 #!/usr/bin/env node
 
-require('../index')
+// CLI usage
+
+require('../dist/config').CommandLineMode = true
+require('../dist/mainCli')()

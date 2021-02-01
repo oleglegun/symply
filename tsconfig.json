@@ -1,0 +1,27 @@
+{
+    "compileOnSave": true,
+    
+    "compilerOptions": {
+        "outDir": "./dist",
+        "target": "ES2017",
+        "resolveJsonModule": true,
+        "module": "commonjs",
+        "sourceMap": false,
+        "strict": true,
+        "alwaysStrict": true,
+        "noImplicitAny": true,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "moduleResolution": "node",
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "allowJs": true,
+        "typeRoots": [
+            "./src/typings",
+            "./node_modules/@types"
+        ]
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "src/typings"]
+}

@@ -1,7 +1,8 @@
-const path = require('path')
-const logger = require('../logger')
-const config = require('../config')
-const { createFileIfNotExists, createDirectoryIfNotExists } = require('../fs-helpers')
+// @ts-nocheck
+import path from 'path'
+import logger from '../logger'
+import config from '../configuration'
+import * as filesystem  from '../filesystem'
 
 function initialize() {
     /*-----------------------------------------------------------------------------
