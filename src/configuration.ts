@@ -1,11 +1,7 @@
-import fs from 'fs'
+import chalk from 'chalk'
 import yaml from 'js-yaml'
 import _ from 'lodash'
 import path from 'path'
-import * as filesystem from './filesystem'
-import chalk from 'chalk'
-
-import { EmptyConfigurationFileError, UnsupportedConfigurationOptionError } from './errors'
 import logger from './logger'
 
 class Configuration {
@@ -21,20 +17,14 @@ class Configuration {
     /*-----------------------------------------------------------------------------
      *  System configuration (default values)
      *----------------------------------------------------------------------------*/
-    private cliModeEnabled = false // Default behaviour - embedded module
     private debugOutput = false
     private _ignoreMissingProperties = false
-    private _enableJsxSupportInHelpers = true
     private _formatOutputHTML = false
     private _minifyOutputHTML = false
     private _omitWarnings = false
     private _ansiLogging = true
     private _clearDistributionDirectoryOnRecompile = false
-    private developmentServerPort = 3000
 
-    public get jsxSupportInHelpers() {
-        return this._enableJsxSupportInHelpers
-    }
     public get formatOutputHTML() {
         return this._formatOutputHTML
     }
@@ -74,8 +64,6 @@ class Configuration {
 
     /** Explicitly set configuration (module mode only) */
     public setModuleModeConfiguration(config: SymplyConfiguration) {
-        this.cliModeEnabled = false
-
         this.partials = _.defaultTo(config.entities?.partials, this.partials)
         this.layouts = _.defaultTo(config.entities?.layouts, this.layouts)
         this.globals = _.defaultTo(config.entities?.globals, this.globals)
@@ -84,7 +72,6 @@ class Configuration {
 
         this.debugOutput = _.defaultTo(config.debugOutput, this.debugOutput)
         this._ignoreMissingProperties = _.defaultTo(config.ignoreMissingProperties, this.ignoreMissingProperties)
-        this._enableJsxSupportInHelpers = _.defaultTo(config.enableJsxSupportInHelpers, this._enableJsxSupportInHelpers)
         this._formatOutputHTML = _.defaultTo(config.formatOutputHTML, this._formatOutputHTML)
         this._minifyOutputHTML = _.defaultTo(config.minifyOutputHTML, this._minifyOutputHTML)
         this._omitWarnings = _.defaultTo(config.omitWarnings, this._omitWarnings)
@@ -127,8 +114,6 @@ class Configuration {
         this.configurationFilePath = this.getDirectoryPathAndAddPrefixIfNeeded(undefined, this.configurationFilePath)
 
         this.validateConfiguration()
-
-        // config.verifyConfiguration(moduleConfiguration, Object.keys(SymplyConfiguration))
     }
 
     private validateConfiguration() {
@@ -148,7 +133,6 @@ class Configuration {
     /*-----------------------------------------------------------------------------
      *  Public entities getters
      *----------------------------------------------------------------------------*/
-
     public getPartials() {
         return this.partials
     }
@@ -193,80 +177,9 @@ class Configuration {
         return this.configurationFilePath
     }
 
-    // public getConfiguration(): Symply.CommandLineModeConfiguration | Symply.ModuleModeConfiguration {
-    //     try {
-    //         const configuration = yaml.safeLoad(
-    //             fs.readFileSync(path.join(process.cwd(), CONFIGURATION_FILE_NAME), { encoding: 'utf8' })
-    //         )
-
-    //         if (!configuration) {
-    //             throw new EmptyConfigurationFileError(CONFIGURATION_FILE_NAME)
-    //         }
-
-    //         verifyConfiguration(configuration, DEFAULT_CONFIGURATION)
-
-    //         return { ...DEFAULT_CONFIGURATION, ...configuration }
-    //     } catch (err) {
-    //         if (err.code === 'ENOENT') {
-    //             logger.info(
-    //                 `Configuration file (${CONFIGURATION_FILE_NAME}) is not found. Using default configuration.`
-    //             )
-    //             return DEFAULT_CONFIGURATION
-    //         } else if (err instanceof UnsupportedConfigurationOptionError) {
-    //             logger.error(err.message)
-    //             process.exit(0)
-    //             // } else if (err instanceof MissingRequiredConfigurationOptionError) {
-    //             //     logger.error(err.message)
-    //             //     process.exit(0)
-    //         } else if (err instanceof EmptyConfigurationFileError) {
-    //             logger.info(err.message)
-    //             logger.info(`Using default configuration:\n`, getPrintableConfiguration(DEFAULT_CONFIGURATION))
-    //             return DEFAULT_CONFIGURATION
-    //         } else {
-    //             logger.error(err)
-    //             process.exit(0)
-    //         }
-    //     }
-    // }
-
-    public isCommandLineMode(): boolean {
-        return this.cliModeEnabled
-    }
-
-    // public verifyConfiguration(configurationObject, allowedKeys: string[]) {
-    //     const defaultConfigurationKeys = allowedKeys
-    //     const customConfigurationKeys = Object.keys(configurationObject)
-
-    //     customConfigurationKeys.forEach(key => {
-    //         if (defaultConfigurationKeys.indexOf(key) === -1) {
-    //             throw new UnsupportedConfigurationOptionError(key, defaultConfigurationKeys)
-    //         }
-    //     })
-
-    //     // defaultConfigurationKeys.forEach(key => {
-    //     //     if (customConfigurationKeys.indexOf(key) === -1) {
-    //     //         throw new MissingRequiredConfigurationOptionError(key, defaultConfigurationKeys)
-    //     //     }
-    //     // })
-    // }
-
-    // public static getPrintableConfiguration(configObject) {
-    //     let result = ''
-    //     const paddingChars = '   '
-
-    //     Object.keys(configObject).forEach(key => {
-    //         const value = typeof configObject[key] === 'string' ? `'${configObject[key]}'` : configObject[key]
-
-    //         result += `${paddingChars}${key}: ${value}\n`
-    //     })
-
-    //     return result
-    // }
-
     /*-----------------------------------------------------------------------------
      *  Private methods
      *----------------------------------------------------------------------------*/
-
     private getDirectoryPathAndAddPrefixIfNeeded(
         newDirectoryPath: string | undefined,
         defaultDirectoryPath: string

@@ -26,7 +26,7 @@ export function load(): Symply.Views {
                 viewName = getViewName(fileName, VIEW_EXTENSION.JSON)
                 break
             case VIEW_EXTENSION.YAML:
-                parsedContents = yaml.safeLoad(view.contents)
+                parsedContents = yaml.load(view.contents)
                 viewName = getViewName(fileName, VIEW_EXTENSION.YAML)
                 break
             case VIEW_EXTENSION.JS:

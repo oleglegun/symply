@@ -1,7 +1,3 @@
-/*-----------------------------------------------------------------------------
- *  Module mode configuration
- *----------------------------------------------------------------------------*/
-
 interface SymplyConfiguration extends Partial<Symply.SystemConfiguration> {
     paths?: Partial<Symply.PathConfiguration>
     entities?: Partial<Symply.EntitiesConfiguration>
@@ -50,11 +46,6 @@ namespace Symply {
          * @default false
          **/
         ignoreMissingProperties: boolean
-        /**
-         * Enable support for JSX tags in helpers file.
-         * @default true
-         **/
-        enableJsxSupportInHelpers: boolean
         /**
          * Format output html files using Prettier (significantly slows down the generation process).
          * @default false

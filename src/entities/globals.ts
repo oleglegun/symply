@@ -5,12 +5,14 @@ import logger from '../logger'
 
 export function load(): Symply.Globals {
     const globalsFilePath = filesystem.joinAndResolvePath(configuration.getGlobalsFilePath())
-    if (!filesystem.existsSync(globalsFilePath)) {
-        logger.warning('Configuration file', chalk.blueBright(configuration.getGlobalsFilePath()), 'is not found.')
-        return configuration.getGlobals()
-    }
+    
+    let result: Symply.Globals = {}
 
-    const result: Symply.Globals = require(globalsFilePath)
+    if (filesystem.existsSync(globalsFilePath)) {
+        result = require(globalsFilePath)
+    } else {
+        logger.warning('Configuration file', chalk.blueBright(configuration.getGlobalsFilePath()), 'is not found.')
+    }
 
     /* [Module mode] Add extra globals if there are any available  */
     Object.assign(result, configuration.getGlobals())

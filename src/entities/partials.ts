@@ -8,6 +8,7 @@ const PARTIAL_EXTENTION = '.html'
 export function load(): Symply.Partials {
     const partialsPath = configuration.getPartialsDirectoryPath()
     const partials = filesystem.scanFiles(partialsPath, true, false, true)
+    
     // change nestes partials names to include its enclosing folder
     partials.map((partial) => {
         if (partial.dirname !== partialsPath) {

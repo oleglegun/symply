@@ -1,10 +1,9 @@
 import chalk from 'chalk'
 import Handlebars from 'handlebars'
-import sass from 'node-sass'
+import { minify } from 'html-minifier'
 import path from 'path'
 import prettier from 'prettier'
-import { minify } from 'html-minifier'
-
+import sass from 'sass'
 import configuration from '../configuration'
 import * as Globals from '../entities/globals'
 import * as Helpers from '../entities/helpers'
@@ -32,6 +31,8 @@ export async function generate(): Promise<Symply.GenerationStats> {
     registerPartials(partials)
 
     registerMissingPropertyHelper()
+
+    registerIfEqHelper()
 
     injectViews(views, globals)
 
@@ -323,6 +324,24 @@ function registerMissingPropertyHelper() {
             return new Handlebars.SafeString('Missing: ' + options.name + '(' + args + ')')
         })
     }
+}
+
+/** If equals Block helper
+ * @example
+ * {{#if_eq var 'value' }}
+ * var === 'value'
+ * {{else}}
+ * var !== 'value'
+ * {{/if_eq}}
+ */
+function registerIfEqHelper() {
+    Handlebars.registerHelper('if_eq', function (this: Symply.Globals, a, b, options) {
+        if (a == b) {
+            return options.fn(this)
+        } else {
+            return options.inverse(this)
+        }
+    })
 }
 
 function registerLayoutHelperAndCompileLayouts(layouts: Symply.Layouts, globals: Symply.Globals) {

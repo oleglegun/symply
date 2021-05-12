@@ -1,5 +1,6 @@
-examples
-src
-test
+/examples
+/test
+/src/*
+!src/types.ts
 
 TODO.md

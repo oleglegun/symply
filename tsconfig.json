@@ -1,6 +1,6 @@
 {
     "compileOnSave": true,
-    
+
     "compilerOptions": {
         "outDir": "./dist",
         "target": "ES2017",
@@ -17,11 +17,8 @@
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "allowJs": true,
-        "typeRoots": [
-            "./src/typings",
-            "./node_modules/@types"
-        ]
+        "typeRoots": ["./node_modules/@types"]
     },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules", "src/typings"]
+    "include": ["src/**/*", "types.ts"],
+    "exclude": ["node_modules"]
 }
