@@ -45,9 +45,9 @@ export async function generate(): Promise<Symply.GenerationStats> {
     const cssSourceFilesWithContents = loadSourceFilesContents(cssSourceFiles)
     const jsSourceFilesWithContents = loadSourceFilesContents(jsSourceFiles)
 
-    registerInternalStylesInjectorHelper([...compiledSassSourceFiles, ...cssSourceFilesWithContents])
+    registerEmbeddedStylesInjectorHelper([...compiledSassSourceFiles, ...cssSourceFilesWithContents])
 
-    registerInternalScriptInjectorHelper(jsSourceFilesWithContents)
+    registerEmbeddedScriptInjectorHelper(jsSourceFilesWithContents)
 
     compileSourceFilesAndCopyToDistributionDirectory(htmlSourceFiles, globals, stats, partials)
 
@@ -195,10 +195,10 @@ function compileSourceFilesAndCopyToDistributionDirectory(
     })
 }
 
-function registerInternalStylesInjectorHelper(compiledSassSourceFiles: FileSystem.FileEntry[]) {
-    Handlebars.registerHelper('internalStyles', internalStylesHelper)
+function registerEmbeddedStylesInjectorHelper(compiledSassSourceFiles: FileSystem.FileEntry[]) {
+    Handlebars.registerHelper('embeddedStyles', embeddedStylesHelper)
 
-    function internalStylesHelper(cssFilePath: string, data: Handlebars.HelperOptions) {
+    function embeddedStylesHelper(cssFilePath: string, data: Handlebars.HelperOptions) {
         const cssStyles = compiledSassSourceFiles.find((file) => {
             return path.join(file.dirname, file.name) === cssFilePath
         })
@@ -224,10 +224,10 @@ function registerInternalStylesInjectorHelper(compiledSassSourceFiles: FileSyste
     }
 }
 
-function registerInternalScriptInjectorHelper(scriptSourceFiles: FileSystem.FileEntry[]) {
-    Handlebars.registerHelper('internalScript', internalScriptHelper)
+function registerEmbeddedScriptInjectorHelper(scriptSourceFiles: FileSystem.FileEntry[]) {
+    Handlebars.registerHelper('embeddedScript', embeddedScriptHelper)
 
-    function internalScriptHelper(scriptFilePath: string) {
+    function embeddedScriptHelper(scriptFilePath: string) {
         const scriptFile = scriptSourceFiles.find((file) => {
             return path.join(file.dirname, file.name) === scriptFilePath
         })
