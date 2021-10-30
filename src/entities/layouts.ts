@@ -9,7 +9,17 @@ const LAYOUT_EXTENSION = '.html'
 
 export function load(): Symply.Layouts {
     const layoutsPath = configuration.getLayoutsDirectoryPath()
-    const layouts = filesystem.scanFiles(layoutsPath, true, false, false)
+    const layouts = filesystem.scanFiles(layoutsPath, true, false, true)
+
+    // change nestes layouts names to include its enclosing folder
+    layouts.forEach((layout) => {
+        if (layout.dirname !== layoutsPath) {
+            const enclosingDirName = layout.dirname.replace(layoutsPath + path.sep, '')
+            layout.name = enclosingDirName + path.sep + layout.name
+            layout.dirname = layoutsPath
+        }
+        return layout
+    })
 
     const result = layouts.reduce<Symply.Layouts>((acc, layout) => {
         acc[getLayoutName(layout.name)] = layout.contents
@@ -31,5 +41,5 @@ export function load(): Symply.Layouts {
 }
 
 function getLayoutName(fileName: string): string {
-    return path.basename(fileName, LAYOUT_EXTENSION)
+    return fileName.replace(new RegExp(LAYOUT_EXTENSION + '$'), '')
 }

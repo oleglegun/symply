@@ -1,16 +1,48 @@
+import path from 'path'
 import configuration from '../configuration'
 import * as filesystem from '../filesystem'
 import logger from '../logger'
 import chalk from 'chalk'
 
+const HELPERS_EXTENTION = '.js'
+
 export function load(): Symply.Helpers {
-    const helpersPath = filesystem.joinAndResolvePath(configuration.getHelpersFilePath())
+    /*-----------------------------------------------------------------------------
+     *  Import namespaced helpers from /helpers
+     *----------------------------------------------------------------------------*/
+    const helpersPath = configuration.getHelpersDirectoryPath()
+    const helpersFileList = filesystem.scanFiles(helpersPath, true, false, true)
 
-    let result: Symply.Helpers = {}
+    // change nested helpers files names to include its enclosing folder
+    helpersFileList.forEach((fileWithHelpers) => {
+        if (fileWithHelpers.dirname !== helpersPath) {
+            const enclosingDirName = fileWithHelpers.dirname.replace(helpersPath + path.sep, '')
+            fileWithHelpers.name = enclosingDirName + path.sep + fileWithHelpers.name
+            fileWithHelpers.dirname = helpersPath
+        }
+        return fileWithHelpers
+    })
 
-    if (filesystem.existsSync(helpersPath)) {
-        const helpersCode = filesystem.getFileContents(helpersPath)
-        result = eval(helpersCode)
+    const result = helpersFileList.reduce<Symply.Helpers>((acc, helpersFile) => {
+        const helpersCode = helpersFile.contents
+
+        const helpersObj = eval(helpersCode)
+
+        Object.keys(helpersObj).forEach((helperName) => {
+            const helperHashKey = `${getHelpersFileName(helpersFile.name)}.${helperName}`
+            acc[helperHashKey] = helpersObj[helperName]
+        })
+        return acc
+    }, {})
+
+    /*-----------------------------------------------------------------------------
+     *  Add extra global helpers from symply-helpers.js
+     *----------------------------------------------------------------------------*/
+    const SymplyHelpersPath = filesystem.joinAndResolvePath(configuration.getHelpersFilePath())
+
+    if (filesystem.existsSync(SymplyHelpersPath)) {
+        const helpersCode = filesystem.getFileContents(SymplyHelpersPath)
+        Object.assign(result, eval(helpersCode))
     }
 
     /* [Module mode] Add extra helpers if there are any available  */
@@ -25,4 +57,8 @@ export function load(): Symply.Helpers {
     }
 
     return result
+}
+
+function getHelpersFileName(fileName: string): string {
+    return fileName.replace(new RegExp(HELPERS_EXTENTION + '$'), '')
 }

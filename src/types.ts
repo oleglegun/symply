@@ -96,6 +96,11 @@ namespace Symply {
          **/
         partialsDirectoryPath: string
         /**
+         * Override default __helpers__ directory path.
+         * @default 'helpers'
+         **/
+         helpersDirectoryPath: string
+        /**
          * Override default __views__ directory path.
          * @default 'views'
          **/

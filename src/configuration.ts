@@ -54,6 +54,7 @@ class Configuration {
     private sourceDirectoryPath = 'src'
     private distributionDirectoryPath = 'dist'
     private partialsDirectoryPath = 'partials'
+    private helpersDirectoryPath = 'helpers'
     private viewsDirectoryPath = 'views'
     private layoutsDirectoryPath = 'layouts'
 
@@ -103,6 +104,10 @@ class Configuration {
         this.partialsDirectoryPath = this.getDirectoryPathAndAddPrefixIfNeeded(
             config.paths?.partialsDirectoryPath,
             this.partialsDirectoryPath
+        )
+        this.helpersDirectoryPath = this.getDirectoryPathAndAddPrefixIfNeeded(
+            config.paths?.helpersDirectoryPath,
+            this.helpersDirectoryPath
         )
         this.viewsDirectoryPath = this.getDirectoryPathAndAddPrefixIfNeeded(
             config.paths?.viewsDirectoryPath,
@@ -163,6 +168,9 @@ class Configuration {
     }
     public getPartialsDirectoryPath() {
         return this.partialsDirectoryPath
+    }
+    public getHelpersDirectoryPath() {
+        return this.helpersDirectoryPath
     }
     public getViewsDirectoryPath() {
         return this.viewsDirectoryPath

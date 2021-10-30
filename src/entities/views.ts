@@ -14,10 +14,20 @@ enum VIEW_EXTENSION {
 
 export function load(): Symply.Views {
     const viewsPath = configuration.getViewsDirectoryPath()
-    const views = filesystem.scanFiles(viewsPath, true, false, false)
+    const views = filesystem.scanFiles(viewsPath, true, false, true)
 
     let parsedContents
     let viewName
+
+    // change nestes views names to include its enclosing folder
+    views.forEach((view) => {
+        if (view.dirname !== viewsPath) {
+            const enclosingDirName = view.dirname.replace(viewsPath + path.sep, '')
+            view.name = enclosingDirName + path.sep + view.name
+            view.dirname = viewsPath
+        }
+        return view
+    })
 
     const result = views.reduce<Symply.Views>((acc, view) => {
         const fileName = view.name
@@ -62,5 +72,5 @@ export function load(): Symply.Views {
 }
 
 function getViewName(fileName: string, extension: string): string {
-    return path.basename(fileName, extension)
+    return fileName.replace(new RegExp(extension + '$'), '')
 }
