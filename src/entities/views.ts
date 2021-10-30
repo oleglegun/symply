@@ -2,6 +2,8 @@ import path from 'path'
 import yaml from 'js-yaml'
 import * as filesystem from '../filesystem'
 import configuration from '../configuration'
+import logger from '../logger'
+import chalk from 'chalk'
 
 // TODO add support for nested dir structure
 enum VIEW_EXTENSION {
@@ -47,6 +49,14 @@ export function load(): Symply.Views {
 
     /* [Module mode] Add extra views if there are any available  */
     Object.assign(result, configuration.getViews())
+    
+    if (configuration.debugOutput) {
+        logger.debug('Registered views:')
+        Object.keys(result).forEach((key) => {
+            logger.log(chalk.green(key))
+        })
+        logger.log()
+    }
 
     return result
 }

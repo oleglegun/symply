@@ -34,4 +34,11 @@ export default {
             console.log('ERR  ', stripAnsi(strings.join(' ')))
         }
     },
+    debug(...strings: string[]): void {
+        if (configuration.ansiLogging) {
+            console.log(chalk.yellowBright('DEBUG'), ...strings)
+        } else {
+            console.log('DEBUG', stripAnsi(strings.join(' ')))
+        }
+    },
 }

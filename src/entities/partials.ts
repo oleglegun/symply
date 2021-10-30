@@ -1,6 +1,8 @@
 import path from 'path'
 import * as filesystem from '../filesystem'
 import configuration from '../configuration'
+import logger from '../logger'
+import chalk from 'chalk'
 
 // TODO: add support for .md and .txt formats
 const PARTIAL_EXTENTION = '.html'
@@ -26,6 +28,14 @@ export function load(): Symply.Partials {
 
     /* [Module mode] Add extra partials if there are any available  */
     Object.assign(result, configuration.getPartials())
+
+    if (configuration.debugOutput) {
+        logger.debug('Registered partials:')
+        Object.keys(result).forEach((key) => {
+            logger.log(chalk.green(key))
+        })
+        logger.log()
+    }
 
     return result
 }

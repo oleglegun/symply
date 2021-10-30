@@ -17,7 +17,7 @@ class Configuration {
     /*-----------------------------------------------------------------------------
      *  System configuration (default values)
      *----------------------------------------------------------------------------*/
-    private debugOutput = false
+    private _debugOutput = false
     private _ignoreMissingProperties = false
     private _formatOutputHTML = false
     private _minifyOutputHTML = false
@@ -25,6 +25,9 @@ class Configuration {
     private _ansiLogging = true
     private _clearDistributionDirectoryOnRecompile = false
 
+    public get debugOutput() {
+        return this._debugOutput
+    }
     public get formatOutputHTML() {
         return this._formatOutputHTML
     }
@@ -70,7 +73,7 @@ class Configuration {
         this.views = _.defaultTo(config.entities?.views, this.views)
         this.helpers = _.defaultTo(config.entities?.helpers, this.helpers)
 
-        this.debugOutput = _.defaultTo(config.debugOutput, this.debugOutput)
+        this._debugOutput = _.defaultTo(config.debugOutput, this._debugOutput)
         this._ignoreMissingProperties = _.defaultTo(config.ignoreMissingProperties, this.ignoreMissingProperties)
         this._formatOutputHTML = _.defaultTo(config.formatOutputHTML, this._formatOutputHTML)
         this._minifyOutputHTML = _.defaultTo(config.minifyOutputHTML, this._minifyOutputHTML)
