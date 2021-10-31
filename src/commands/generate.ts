@@ -7,13 +7,10 @@ import sass from 'sass'
 import configuration from '../configuration'
 import * as Globals from '../entities/globals'
 import * as Helpers from '../entities/helpers'
-import * as Layouts from '../entities/layouts'
 import * as Partials from '../entities/partials'
-import * as Views from '../entities/views'
 import * as filesystem from '../filesystem'
 import logger from '../logger'
 import ProgressBar from '../progressBar'
-import string from '../strings'
 
 export async function generate(): Promise<Symply.GenerationStats> {
     const stats: Symply.GenerationStats = {
@@ -21,10 +18,8 @@ export async function generate(): Promise<Symply.GenerationStats> {
         copiedFilesCount: 0,
     }
 
-    const views = Views.load()
     const globals = Globals.load()
     const partials = Partials.load()
-    const layouts = Layouts.load()
 
     const { scssSourceFiles, cssSourceFiles, htmlSourceFiles, jsSourceFiles, otherSourceFiles } = scanSourceFiles()
 
@@ -34,9 +29,7 @@ export async function generate(): Promise<Symply.GenerationStats> {
 
     registerIfEqHelper()
 
-    injectViews(views, globals)
-
-    registerLayoutHelperAndCompileLayouts(layouts, globals)
+    injectGlobalsToHelpers(globals)
 
     clearDistributionDirectoryIfNeeded()
 
@@ -296,7 +289,7 @@ function compileSassAndCopyToDistributionDirectory(
 function clearDistributionDirectoryIfNeeded() {
     if (configuration.clearDistributionDirectoryOnRecompile) {
         const absoluteDistDirectoryPath = filesystem.joinAndResolvePath(configuration.getDistributionDirectoryPath())
-        logger.warning('Clearing distribution directory ' + chalk.blueBright(absoluteDistDirectoryPath))
+        logger.info(`Clearing distribution directory: ${chalk.blueBright(absoluteDistDirectoryPath)}`)
         filesystem.clearDirectoryContents(absoluteDistDirectoryPath)
     }
 }
@@ -307,11 +300,11 @@ function registerPartials(partials: Symply.Partials) {
     })
 }
 
-function injectViews(views: Symply.Views, globals: Symply.Globals) {
+function injectGlobalsToHelpers(globals: Symply.Globals) {
     const helpers = Helpers.load()
 
     Object.keys(helpers).forEach((helperName) => {
-        Handlebars.registerHelper(helperName, injectHelperContextDecorator(helpers[helperName], views, globals))
+        Handlebars.registerHelper(helperName, injectHelperContextDecorator(helpers[helperName], globals))
     })
 }
 
@@ -344,37 +337,6 @@ function registerIfEqHelper() {
     })
 }
 
-function registerLayoutHelperAndCompileLayouts(layouts: Symply.Layouts, globals: Symply.Globals) {
-    Handlebars.registerHelper('layout', layoutHelper)
-
-    function layoutHelper(layoutName: string, data: Handlebars.HelperOptions) {
-        if (!data) {
-            logger.error(`Layout name is not passed.`)
-            logger.log(string.layouts.usage)
-            process.exit(1)
-        }
-
-        if (!data.fn) {
-            logger.error(`Layout does not support any non Key-Value parameters.`)
-            logger.log(string.layouts.usage)
-            process.exit(1)
-        }
-
-        if (!layouts[layoutName]) {
-            logger.error(
-                `Layout '${layoutName}' is not found in directory '${configuration.getLayoutsDirectoryPath()}/'.`
-            )
-            process.exit(1)
-        }
-
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        return Handlebars.compile(layouts[layoutName].replace('{{}}', data.fn(this)))(
-            Object.assign({}, globals, data.hash)
-        )
-    }
-}
-
 function scanSourceFiles() {
     const allSourceFiles = filesystem.scanFiles(configuration.getSourceDirectoryPath(), false, true, true)
 
@@ -402,7 +364,6 @@ function scanSourceFiles() {
 
 function injectHelperContextDecorator(
     helperFunction: Symply.Helper,
-    views: Symply.Views,
     globals: Symply.Globals
 ): Handlebars.HelperDelegate {
     return function (...args) {
@@ -410,15 +371,8 @@ function injectHelperContextDecorator(
         const data = args[args.length - 1]
         const renderBlockContentFn = data.fn // if block helper
 
-        const viewName: string | undefined = data.hash?.view
-
         return new Handlebars.SafeString(
-            viewName
-                ? helperFunction(
-                      { hash: data.hash, globals, view: views[viewName], renderBlockContent: renderBlockContentFn },
-                      ...passedArgs
-                  )
-                : helperFunction({ hash: data.hash, globals, renderBlockContent: renderBlockContentFn }, ...passedArgs)
+            helperFunction({ hash: data.hash, globals, renderBlockContent: renderBlockContentFn }, ...passedArgs)
         )
     }
 }

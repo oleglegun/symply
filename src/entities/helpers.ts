@@ -4,7 +4,7 @@ import * as filesystem from '../filesystem'
 import logger from '../logger'
 import chalk from 'chalk'
 
-const HELPERS_EXTENTION = '.js'
+const HELPERS_EXTENSION = '.js'
 
 export function load(): Symply.Helpers {
     /*-----------------------------------------------------------------------------
@@ -36,16 +36,8 @@ export function load(): Symply.Helpers {
     }, {})
 
     /*-----------------------------------------------------------------------------
-     *  Add extra global helpers from symply-helpers.js
+     *  [Module mode] Add extra helpers if there are any available
      *----------------------------------------------------------------------------*/
-    const SymplyHelpersPath = filesystem.joinAndResolvePath(configuration.getHelpersFilePath())
-
-    if (filesystem.existsSync(SymplyHelpersPath)) {
-        const helpersCode = filesystem.getFileContents(SymplyHelpersPath)
-        Object.assign(result, eval(helpersCode))
-    }
-
-    /* [Module mode] Add extra helpers if there are any available  */
     Object.assign(result, configuration.getHelpers())
 
     if (configuration.debugOutput) {
@@ -60,5 +52,5 @@ export function load(): Symply.Helpers {
 }
 
 function getHelpersFileName(fileName: string): string {
-    return fileName.replace(new RegExp(HELPERS_EXTENTION + '$'), '')
+    return fileName.replace(new RegExp(HELPERS_EXTENSION + '$'), '')
 }

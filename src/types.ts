@@ -20,18 +20,11 @@ namespace Symply {
          * @example {{ #blockHelperFunc }} block content {{ /blockHelperFunction }}
          **/
         renderBlockContent?: () => string
-        /**
-         * Loaded `view` by view name if it was passed to helper function.
-         * @example {{ helperFunc view='viewName' }}
-         **/
-        view?: any
     }
 
     /** @example { article: '<article>{{}}</article>' } */
-    export type Layouts = { [layoutName: string]: string }
     export type Globals = { [globalPropertyName: string]: any }
     export type Partials = { [partialName: string]: string }
-    export type Views = { [viewName: string]: any }
     export type Helper = (data: HelperDataObject, ...args: HelperArgument[]) => string
     export type Helpers = { [helperName: string]: Helper }
 
@@ -77,7 +70,7 @@ namespace Symply {
         /**
          * Set a path to prefix all __default__ SYMPLY directories (relative to your NPM project's root dir).
          * @default ''
-         * @example 'symply' -> 'symply/dist', 'symply/src', 'symply/layouts', 'symply/partials', 'symply/views'
+         * @example 'symply' -> 'symply/dist', 'symply/src', 'symply/helpers', 'symply/globals', 'symply/partials'
          **/
         defaultDirectoriesPrefix: string
         /**
@@ -91,6 +84,11 @@ namespace Symply {
          **/
         distributionDirectoryPath: string
         /**
+         * Override default __globals__ directory path.
+         * @default 'globals'
+         **/
+        globalsDirectoryPath: string
+        /**
          * Override default __partials__ directory path.
          * @default 'partials'
          **/
@@ -99,26 +97,12 @@ namespace Symply {
          * Override default __helpers__ directory path.
          * @default 'helpers'
          **/
-         helpersDirectoryPath: string
-        /**
-         * Override default __views__ directory path.
-         * @default 'views'
-         **/
-        viewsDirectoryPath: string
-        /**
-         * Override default __layouts__ directory path.
-         * @default 'layouts'
-         **/
-        layoutsDirectoryPath: string
+        helpersDirectoryPath: string
     }
 
     export interface EntitiesConfiguration {
         /** Explicitly passed partials */
         partials: Symply.Partials
-        /** Explicitly passed layouts */
-        layouts: Symply.Layouts
-        /** Explicitly passed views */
-        views: Symply.Views
         /** Explicitly passed helpers */
         helpers: Symply.Helpers
         /** Explicitly passed globals */

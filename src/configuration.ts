@@ -1,5 +1,4 @@
 import chalk from 'chalk'
-import yaml from 'js-yaml'
 import _ from 'lodash'
 import path from 'path'
 import logger from './logger'
@@ -8,10 +7,8 @@ class Configuration {
     /*-----------------------------------------------------------------------------
      *  Explicitly passed entities to merge with those from files (module mode only)
      *----------------------------------------------------------------------------*/
-    private partials: Symply.Partials = {}
-    private layouts: Symply.Layouts = {}
     private globals: Symply.Globals = {}
-    private views: Symply.Views = {}
+    private partials: Symply.Partials = {}
     private helpers: Symply.Helpers = {}
 
     /*-----------------------------------------------------------------------------
@@ -53,13 +50,10 @@ class Configuration {
     private defaultDirectoriesPrefix = ''
     private sourceDirectoryPath = 'src'
     private distributionDirectoryPath = 'dist'
+    private globalsDirectoryPath = 'globals'
     private partialsDirectoryPath = 'partials'
     private helpersDirectoryPath = 'helpers'
-    private viewsDirectoryPath = 'views'
-    private layoutsDirectoryPath = 'layouts'
 
-    private helpersFilePath = 'symply-helpers.js'
-    private globalsFilePath = 'symply-globals.js'
     private configurationFilePath = 'symply-config.yaml'
 
     /*-----------------------------------------------------------------------------
@@ -68,10 +62,8 @@ class Configuration {
 
     /** Explicitly set configuration (module mode only) */
     public setModuleModeConfiguration(config: SymplyConfiguration) {
-        this.partials = _.defaultTo(config.entities?.partials, this.partials)
-        this.layouts = _.defaultTo(config.entities?.layouts, this.layouts)
         this.globals = _.defaultTo(config.entities?.globals, this.globals)
-        this.views = _.defaultTo(config.entities?.views, this.views)
+        this.partials = _.defaultTo(config.entities?.partials, this.partials)
         this.helpers = _.defaultTo(config.entities?.helpers, this.helpers)
 
         this._debugOutput = _.defaultTo(config.debugOutput, this._debugOutput)
@@ -101,6 +93,10 @@ class Configuration {
             config.paths?.distributionDirectoryPath,
             this.distributionDirectoryPath
         )
+        this.globalsDirectoryPath = this.getDirectoryPathAndAddPrefixIfNeeded(
+            config.paths?.globalsDirectoryPath,
+            this.globalsDirectoryPath
+        )
         this.partialsDirectoryPath = this.getDirectoryPathAndAddPrefixIfNeeded(
             config.paths?.partialsDirectoryPath,
             this.partialsDirectoryPath
@@ -109,16 +105,7 @@ class Configuration {
             config.paths?.helpersDirectoryPath,
             this.helpersDirectoryPath
         )
-        this.viewsDirectoryPath = this.getDirectoryPathAndAddPrefixIfNeeded(
-            config.paths?.viewsDirectoryPath,
-            this.viewsDirectoryPath
-        )
-        this.layoutsDirectoryPath = this.getDirectoryPathAndAddPrefixIfNeeded(
-            config.paths?.layoutsDirectoryPath,
-            this.layoutsDirectoryPath
-        )
-        this.globalsFilePath = this.getDirectoryPathAndAddPrefixIfNeeded(undefined, this.globalsFilePath)
-        this.helpersFilePath = this.getDirectoryPathAndAddPrefixIfNeeded(undefined, this.helpersFilePath)
+
         this.configurationFilePath = this.getDirectoryPathAndAddPrefixIfNeeded(undefined, this.configurationFilePath)
 
         this.validateConfiguration()
@@ -141,17 +128,11 @@ class Configuration {
     /*-----------------------------------------------------------------------------
      *  Public entities getters
      *----------------------------------------------------------------------------*/
-    public getPartials() {
-        return this.partials
-    }
-    public getLayouts() {
-        return this.layouts
-    }
     public getGlobals() {
         return this.globals
     }
-    public getViews() {
-        return this.views
+    public getPartials() {
+        return this.partials
     }
     public getHelpers() {
         return this.helpers
@@ -166,23 +147,14 @@ class Configuration {
     public getDistributionDirectoryPath() {
         return this.distributionDirectoryPath
     }
+    public getGlobalsDirectoryPath() {
+        return this.globalsDirectoryPath
+    }
     public getPartialsDirectoryPath() {
         return this.partialsDirectoryPath
     }
     public getHelpersDirectoryPath() {
         return this.helpersDirectoryPath
-    }
-    public getViewsDirectoryPath() {
-        return this.viewsDirectoryPath
-    }
-    public getLayoutsDirectoryPath() {
-        return this.layoutsDirectoryPath
-    }
-    public getHelpersFilePath() {
-        return this.helpersFilePath
-    }
-    public getGlobalsFilePath() {
-        return this.globalsFilePath
     }
     public getConfigurationFilePath() {
         return this.configurationFilePath
@@ -204,27 +176,6 @@ class Configuration {
         } else {
             return _.defaultTo(newDirectoryPath, defaultDirectoryPath)
         }
-    }
-
-    private getFilesToBeCreated(): FileSystem.FileEntry[] {
-        return [
-            {
-                name: this.getGlobalsFilePath(),
-                dirname: '.',
-                contents: "module.exports = {\n\tsiteName: 'My new site',\n}",
-            },
-            {
-                name: this.getHelpersFilePath(),
-                dirname: '.',
-                contents: 'module.exports = {\n\tmyCustomHelper: (data) => { return data }\n}',
-            },
-            {
-                name: this.getConfigurationFilePath(),
-                dirname: '.',
-                // @ts-ignore
-                contents: '# Here you can change the default configuration\n' + yaml.dump(DEFAULT_CONFIGURATION),
-            },
-        ]
     }
 }
 
