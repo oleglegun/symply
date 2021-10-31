@@ -3,11 +3,15 @@ import * as filesystem from '../filesystem'
 import configuration from '../configuration'
 import logger from '../logger'
 import chalk from 'chalk'
+import _ from 'lodash'
 
 // TODO: add support for .md and .txt formats
 const PARTIAL_EXTENTION = '.html'
 
 export function load(): Symply.Partials {
+    /*-----------------------------------------------------------------------------
+     *  Import partials from /partials
+     *----------------------------------------------------------------------------*/
     const partialsPath = configuration.getPartialsDirectoryPath()
     const partials = filesystem.scanFiles(partialsPath, true, false, true)
 
@@ -26,7 +30,14 @@ export function load(): Symply.Partials {
         return acc
     }, {})
 
-    /* [Module mode] Add extra partials if there are any available  */
+    /*-----------------------------------------------------------------------------
+     *  [Module mode] Add extra partials if there are any available
+     *----------------------------------------------------------------------------*/
+    const shadowedPartialsList = _.intersection(Object.keys(result), Object.keys(configuration.getPartials()))
+    if (shadowedPartialsList.length !== 0) {
+        logger.error(`Some partials are shadowed by module configuration: ${chalk.blueBright(shadowedPartialsList)}`)
+    }
+
     Object.assign(result, configuration.getPartials())
 
     if (configuration.debugOutput) {
