@@ -29,6 +29,8 @@ export async function generate(): Promise<Symply.GenerationStats> {
 
     registerIfEqHelper()
 
+    registerIfNeHelper()
+
     injectGlobalsToHelpers(globals)
 
     clearDistributionDirectoryIfNeeded()
@@ -330,6 +332,24 @@ function registerMissingPropertyHelper() {
 function registerIfEqHelper() {
     Handlebars.registerHelper('if_eq', function (this: Symply.Globals, a, b, options) {
         if (a == b) {
+            return options.fn(this)
+        } else {
+            return options.inverse(this)
+        }
+    })
+}
+
+/** If not equals Block helper
+ * @example
+ * {{#if_ne var 'value' }}
+ * var !== 'value'
+ * {{else}}
+ * var === 'value'
+ * {{/if_ne}}
+ */
+ function registerIfNeHelper() {
+    Handlebars.registerHelper('if_ne', function (this: Symply.Globals, a, b, options) {
+        if (a != b) {
             return options.fn(this)
         } else {
             return options.inverse(this)

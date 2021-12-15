@@ -1,6 +1,6 @@
 {
     "name": "symply",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "description": "A simple static site generator.",
     "author": "Oleg Legun <oleg.legun@gmail.com>",
     "homepage": "https://github.com/oleglegun/symply#readme",
@@ -15,12 +15,12 @@
     "license": "MIT",
     "scripts": {
         "compile": "npm run dist:clear && npx tsc",
+        "publish": "npm run compile && npm publish",
         "watch": "npm run dist:clear && npx tsc -w",
         "dist:clear": "rm -rf dist",
         "start": "node index.js",
         "lint": "npx eslint . --ext .js,.jsx,.ts,.tsx",
-        "test": "npm run compile && tape test/**/*.js | tap-spec",
-        "publish-npm": "npm publish"
+        "test": "npm run compile && tape test/**/*.js | tap-spec"
     },
     "dependencies": {
         "chalk": "3.0.0",
