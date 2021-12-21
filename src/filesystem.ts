@@ -30,7 +30,7 @@ export function hasFileExtension(fileName: string, validExtensionsList: string[]
     }
 
     for (let i = 0; i < validExtensionsList.length; i++) {
-        if (fileName.endsWith(validExtensionsList[i])) {
+        if (fileName.endsWith(`.${validExtensionsList[i]}`)) {
             return true
         }
     }
