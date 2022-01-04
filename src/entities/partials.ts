@@ -6,7 +6,7 @@ import chalk from 'chalk'
 import _ from 'lodash'
 
 // TODO: add support for .md and .txt formats
-const PARTIAL_EXTENTION = '.html'
+const SUPPORTED_PARTIAL_EXTENTION_LIST = ['.html', '.hbs']
 
 export function load(): Symply.Partials {
     /*-----------------------------------------------------------------------------
@@ -26,7 +26,16 @@ export function load(): Symply.Partials {
     })
 
     const result = partials.reduce<Symply.Partials>((acc, partial) => {
-        acc[getPartialName(partial.name)] = partial.contents
+        const partialNameWithoutExtension = getPartialNameWithoutExtension(partial.name)
+
+        if (acc[partialNameWithoutExtension] !== undefined) {
+            logger.warning(
+                `Detected partials with the same name "${partial.dirname}/${partialNameWithoutExtension}.*", but different extensions.`
+            )
+        } else {
+            acc[partialNameWithoutExtension] = partial.contents
+        }
+
         return acc
     }, {})
 
@@ -51,6 +60,7 @@ export function load(): Symply.Partials {
     return result
 }
 
-function getPartialName(fileName: string): string {
-    return fileName.replace(new RegExp(PARTIAL_EXTENTION + '$'), '')
+function getPartialNameWithoutExtension(fileName: string): string {
+    const re = `(${SUPPORTED_PARTIAL_EXTENTION_LIST.map((ext) => '\\' + ext).join('|')})$`
+    return fileName.replace(new RegExp(re), '')
 }

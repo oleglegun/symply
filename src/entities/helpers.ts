@@ -52,5 +52,5 @@ export function load(): Symply.Helpers {
 }
 
 function getHelpersFileName(fileName: string): string {
-    return fileName.replace(new RegExp(HELPERS_EXTENSION + '$'), '')
+    return fileName.replace(new RegExp(`\\${HELPERS_EXTENSION}$`), '')
 }

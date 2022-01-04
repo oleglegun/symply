@@ -92,5 +92,5 @@ export function load(): Symply.Globals {
 }
 
 function getGlobalsFileNameWithoutExtension(fileName: string, extension: string): string {
-    return fileName.replace(new RegExp(extension + '$'), '')
+    return fileName.replace(new RegExp(`\\${extension}$`), '')
 }

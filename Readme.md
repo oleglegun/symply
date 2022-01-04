@@ -25,3 +25,18 @@ A simple pluggable **static site generator** with great flexibility and control.
 
 ``` -->
 
+
+## Render partial by passed path as a parameter
+
+```hbs
+<!-- index.html -->
+{{> partials/userCard iconPath='svg/icons/user-1' }}
+```
+
+```hbs
+<!-- partials/userCard.html -->
+<div class="UserCard">
+    {{> (lookup . 'iconPath' ) }}
+</div>
+```
+
