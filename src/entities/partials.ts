@@ -5,8 +5,7 @@ import logger from '../logger'
 import chalk from 'chalk'
 import _ from 'lodash'
 
-// TODO: add support for .md and .txt formats
-const SUPPORTED_PARTIAL_EXTENTION_LIST = ['.html', '.hbs']
+const SUPPORTED_PARTIAL_EXTENTION_LIST = ['.html', '.hbs', '.svg', '.md', '.txt']
 
 export function load(): Symply.Partials {
     /*-----------------------------------------------------------------------------
@@ -29,8 +28,12 @@ export function load(): Symply.Partials {
         const partialNameWithoutExtension = getPartialNameWithoutExtension(partial.name)
 
         if (acc[partialNameWithoutExtension] !== undefined) {
+            const duplicatePartialPath = `${partial.dirname}${path.sep}${partialNameWithoutExtension}.*`
+
             logger.warning(
-                `Detected partials with the same name "${partial.dirname}/${partialNameWithoutExtension}.*", but different extensions.`
+                `Detected partials with the same name ${chalk.blueBright(
+                    duplicatePartialPath
+                )}, but different extensions.`
             )
         } else {
             acc[partialNameWithoutExtension] = partial.contents
