@@ -20,6 +20,12 @@ namespace Symply {
          * @example {{ #blockHelperFunc }} block content {{ /blockHelperFunction }}
          **/
         renderBlockContent?: () => string
+        /**
+         * Compile input template string and render result content
+         * @example
+         * compile('{{> myPartial}}')
+         **/
+        renderTemplate: (template: string, input?: Record<string, unknown>) => string
     }
 
     /** @example { article: '<article>{{}}</article>' } */

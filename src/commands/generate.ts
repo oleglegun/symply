@@ -391,8 +391,12 @@ function injectHelperContextDecorator(
         const data = args[args.length - 1]
         const renderBlockContentFn = data.fn // if block helper
 
+        const compileAndRenderTemplateDecorator = (template: string, input?: Record<string, unknown>) => {
+            return Handlebars.compile(template)(input ?? {})
+        }
+
         return new Handlebars.SafeString(
-            helperFunction({ hash: data.hash, globals, renderBlockContent: renderBlockContentFn }, ...passedArgs)
+            helperFunction({ hash: data.hash, globals, renderBlockContent: renderBlockContentFn, renderTemplate: compileAndRenderTemplateDecorator }, ...passedArgs)
         )
     }
 }
