@@ -21,7 +21,8 @@ export async function generate(): Promise<Symply.GenerationStats> {
     const globals = Globals.load()
     const partials = Partials.load()
 
-    const { scssSourceFiles, cssSourceFiles, htmlSourceFiles, jsSourceFiles, otherSourceFiles } = scanSourceFiles()
+    const { scssSourceFiles, cssSourceFiles, htmlSourceFiles, hbsSourceFiles, jsSourceFiles, otherSourceFiles } =
+        scanSourceFiles()
 
     registerPartials(partials)
 
@@ -44,7 +45,7 @@ export async function generate(): Promise<Symply.GenerationStats> {
 
     registerEmbeddedScriptInjectorHelper(jsSourceFilesWithContents)
 
-    compileSourceFilesAndCopyToDistributionDirectory(htmlSourceFiles, globals, stats, partials)
+    compileSourceFilesAndCopyToDistributionDirectory(htmlSourceFiles, hbsSourceFiles, globals, stats)
 
     const copiedFilesCount = await copySourceFilesToDistributionDirectory(
         cssSourceFiles,
@@ -98,18 +99,20 @@ async function copySourceFilesToDistributionDirectory(...sourceFilesGroups: File
 
 function compileSourceFilesAndCopyToDistributionDirectory(
     htmlTemplateSourceFiles: FileSystem.FileEntry[],
+    hbsTemplateSourceFiles: FileSystem.FileEntry[],
     globals: Symply.Globals,
-    stats: Symply.GenerationStats,
-    partials: Symply.Partials
+    stats: Symply.GenerationStats
 ) {
-    const htmlTemplateCompilationProgress = new ProgressBar(htmlTemplateSourceFiles.length)
+    const allTemplateSourceFiles = htmlTemplateSourceFiles.concat(hbsTemplateSourceFiles)
+    const templateCompilationProgress = new ProgressBar(allTemplateSourceFiles.length)
+    const createdFileSet = new Set()
 
     /*-----------------------------------------------------------------------------
      *  Compile templates with passing globals
      *  Format/Minify HTML output
      *  Save results to the distribution directory
      *----------------------------------------------------------------------------*/
-    htmlTemplateSourceFiles.forEach((file, idx) => {
+    allTemplateSourceFiles.forEach((file, idx) => {
         const templateContents = filesystem.getFileContents(
             filesystem.joinAndResolvePath(configuration.getSourceDirectoryPath(), file.dirname, file.name)
         )
@@ -143,10 +146,7 @@ function compileSourceFilesAndCopyToDistributionDirectory(
                 resultHTML = prettier.format(resultHTML, { parser: 'html' })
             }
 
-            htmlTemplateCompilationProgress.tick(
-                `Compiling HTML files:`,
-                `${idx + 1}/${htmlTemplateSourceFiles.length}`
-            )
+            templateCompilationProgress.tick(`Compiling HTML/HBS files:`, `${idx + 1}/${allTemplateSourceFiles.length}`)
             stats.generatedFilesCount++
         } catch (err) {
             if (err instanceof RangeError) {
@@ -163,19 +163,12 @@ function compileSourceFilesAndCopyToDistributionDirectory(
                         file.dirname,
                         file.name
                     )
-                    const missingPartialMessage =
+
+                    logger.error(
                         'Partial ' +
-                        chalk.red(`{{> ${result} }}`) +
-                        ` cannot be found (used in ${chalk.blueBright(targetTemplateFilePath)})`
-
-                    const registeredPartialsMessage =
-                        Object.keys(partials).length > 0
-                            ? `\n${' '.repeat(6)}Registered partials:\n${' '.repeat(8)}${Object.keys(partials)
-                                  .map((p) => chalk.green(p))
-                                  .join('\n' + ' '.repeat(8))}`
-                            : `\n${' '.repeat(6)}No registered partials found`
-
-                    logger.error(missingPartialMessage + registeredPartialsMessage)
+                            chalk.red(`{{> ${result} }}`) +
+                            ` cannot be found (used in ${chalk.blueBright(targetTemplateFilePath)})`
+                    )
                 } else {
                     logger.error(err.message)
                 }
@@ -183,10 +176,28 @@ function compileSourceFilesAndCopyToDistributionDirectory(
             process.exit(1)
         }
 
-        filesystem.createFile(
-            filesystem.joinAndResolvePath(configuration.getDistributionDirectoryPath(), file.dirname, file.name),
-            resultHTML
-        )
+        const outputHTMLFileName = file.name.endsWith('.html') ? file.name : file.name.replace(/(\.hbs)$/, '.html')
+        
+        const sourceFilePath = path.join(file.dirname, outputHTMLFileName)
+
+        if (createdFileSet.has(sourceFilePath)) {
+            logger.warning(
+                `Detected HTML/HBS source files with the same name ${chalk.blueBright(
+                    sourceFilePath.replace(/\.html$/, '.*')
+                )}, but different extensions. File creation skipped.`
+            )
+        } else {
+            createdFileSet.add(sourceFilePath)
+
+            filesystem.createFile(
+                filesystem.joinAndResolvePath(
+                    configuration.getDistributionDirectoryPath(),
+                    file.dirname,
+                    outputHTMLFileName
+                ),
+                resultHTML
+            )
+        }
     })
 }
 
@@ -347,7 +358,7 @@ function registerIfEqHelper() {
  * var === 'value'
  * {{/if_ne}}
  */
- function registerIfNeHelper() {
+function registerIfNeHelper() {
     Handlebars.registerHelper('if_ne', function (this: Symply.Globals, a, b, options) {
         if (a != b) {
             return options.fn(this)
@@ -364,6 +375,10 @@ function scanSourceFiles() {
         return filesystem.hasFileExtension(file.name, ['html'])
     })
 
+    const hbsSourceFiles = allSourceFiles.filter((file) => {
+        return filesystem.hasFileExtension(file.name, ['hbs'])
+    })
+
     const scssSourceFiles = allSourceFiles.filter((file) => {
         return filesystem.hasFileExtension(file.name, ['sass', 'scss']) && !file.name.startsWith('_')
     })
@@ -377,9 +392,10 @@ function scanSourceFiles() {
     })
 
     const otherSourceFiles = allSourceFiles.filter((file) => {
-        return !filesystem.hasFileExtension(file.name, ['html', 'sass', 'scss', 'css', 'js'])
+        return !filesystem.hasFileExtension(file.name, ['html', 'hbs', 'sass', 'scss', 'css', 'js'])
     })
-    return { scssSourceFiles, cssSourceFiles, htmlSourceFiles, jsSourceFiles, otherSourceFiles }
+
+    return { scssSourceFiles, cssSourceFiles, htmlSourceFiles, hbsSourceFiles, jsSourceFiles, otherSourceFiles }
 }
 
 function injectHelperContextDecorator(
@@ -396,7 +412,15 @@ function injectHelperContextDecorator(
         }
 
         return new Handlebars.SafeString(
-            helperFunction({ hash: data.hash, globals, renderBlockContent: renderBlockContentFn, renderTemplate: compileAndRenderTemplateDecorator }, ...passedArgs)
+            helperFunction(
+                {
+                    hash: data.hash,
+                    globals,
+                    renderBlockContent: renderBlockContentFn,
+                    renderTemplate: compileAndRenderTemplateDecorator,
+                },
+                ...passedArgs
+            )
         )
     }
 }
