@@ -177,7 +177,7 @@ function compileSourceFilesAndCopyToDistributionDirectory(
         }
 
         const outputHTMLFileName = file.name.endsWith('.html') ? file.name : file.name.replace(/(\.hbs)$/, '.html')
-        
+
         const sourceFilePath = path.join(file.dirname, outputHTMLFileName)
 
         if (createdFileSet.has(sourceFilePath)) {
@@ -219,21 +219,16 @@ function registerEmbeddedStylesInjectorHelper(compiledSassSourceFiles: FileSyste
             process.exit(1)
         }
 
-        let extraAttributes = ''
-        for (const [key, value] of Object.entries(data.hash)) {
-            extraAttributes += ` ${key}="${value}"`
-            // console.log(`${key}: ${value}`);
-        }
-
-        // .entries((key: string, value: string) => {})
-        return new Handlebars.SafeString(`<style${extraAttributes}>` + cssStyles.contents + '</style>')
+        return new Handlebars.SafeString(
+            (data.hash.attributes ? `<style ${data.hash.attributes}>` : `<style>`) + cssStyles.contents + '</style>'
+        )
     }
 }
 
 function registerEmbeddedScriptInjectorHelper(scriptSourceFiles: FileSystem.FileEntry[]) {
     Handlebars.registerHelper('embeddedScript', embeddedScriptHelper)
 
-    function embeddedScriptHelper(scriptFilePath: string) {
+    function embeddedScriptHelper(scriptFilePath: string, data: Handlebars.HelperOptions) {
         const scriptFile = scriptSourceFiles.find((file) => {
             return path.join(file.dirname, file.name) === scriptFilePath
         })
@@ -247,7 +242,10 @@ function registerEmbeddedScriptInjectorHelper(scriptSourceFiles: FileSystem.File
             )
             process.exit(1)
         }
-        return new Handlebars.SafeString('<script>' + scriptFile.contents + '</script>')
+
+        return new Handlebars.SafeString(
+            (data.hash.attributes ? `<script ${data.hash.attributes}>` : '<script>') + scriptFile.contents + '</script>'
+        )
     }
 }
 

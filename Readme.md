@@ -4,39 +4,66 @@
 
 A simple pluggable **static site generator** with great flexibility and control.
 
-**Symply** is based on well-known fast and reliable [Handlebars.js](https://github.com/wycats/handlebars.js) templating engine.
+**Symply** is based on a well-known, fast and reliable [Handlebars.js](https://github.com/wycats/handlebars.js) templating engine.
 
-<!-- 
-# Partials
+## Custom Helpers
 
-```html
+### Embedded Styles
 
+```hbs
+{{embeddedStyles 'src_dir_relative_path_to_style.css' attributes='media="(min-width: 500px) and (max-width: 1000px)"' }}
 ```
 
-# Block partials 
-
 ```html
-
+<style media="(min-width: 500px) and (max-width: 1000px)">
+    /* ... */
+</style>
 ```
 
-# Helpers
+### Embedded Script
 
-```js
+```hbs
+{{embeddedScript 'src_dir_relative_path_to_script.js' attributes='async type="module"'}}
+```
 
-``` -->
+```html
+<script async type="module">
+    // ...
+</script>
+```
 
+### `if_eq`
 
-## Render partial by passed path as a parameter
+```hbs
+ {{#if_eq var 'value' }}
+ var === 'value'
+ {{else}}
+ var !== 'value'
+ {{/if_eq}}
+```
+
+### `if_ne`
+
+```hbs
+{{#if_ne var 'value' }}
+var !== 'value'
+{{else}}
+var === 'value'
+{{/if_ne}}
+```
+
+## Tips
+
+### Render partial by its passed path
 
 ```hbs
 <!-- index.html -->
-{{> partials/userCard iconPath='svg/icons/user-1' }}
+{{> partials/UserCard iconPath='svg/icons/user-1' }}
 ```
 
 ```hbs
-<!-- partials/userCard.html -->
+<!-- partials/UserCard.html -->
 <div class="UserCard">
     {{> (lookup . 'iconPath' ) }}
 </div>
 ```
-
