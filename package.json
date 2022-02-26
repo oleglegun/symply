@@ -1,6 +1,6 @@
 {
     "name": "symply",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "description": "A simple static site generator.",
     "author": "Oleg Legun <oleg.legun@gmail.com>",
     "homepage": "https://github.com/oleglegun/symply#readme",
@@ -24,15 +24,15 @@
         "test": "npm run compile && tape test/**/*.js | tap-spec"
     },
     "dependencies": {
-        "chalk": "3.0.0",
+        "chalk": "5.0.0",
         "flat": "^5.0.2",
-        "fs-extra": "10.0.0",
+        "fs-extra": "10.0.1",
         "handlebars": "4.7.7",
         "html-minifier": "^4.0.0",
         "js-yaml": "4.1.0",
         "lodash": "^4.17.21",
         "progress": "2.0.3",
-        "sass": "^1.32.12",
+        "sass": "^1.49.9",
         "strip-ansi": "^6.0.0"
     },
     "devDependencies": {
