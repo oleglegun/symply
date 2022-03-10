@@ -1,6 +1,8 @@
+/* eslint-disable */
 interface SymplyConfiguration extends Partial<Symply.SystemConfiguration> {
     paths?: Partial<Symply.PathConfiguration>
     entities?: Partial<Symply.EntitiesConfiguration>
+    actions?: Partial<Symply.ActionsConfiguration>
 }
 
 namespace Symply {
@@ -113,6 +115,87 @@ namespace Symply {
         helpers: Symply.Helpers
         /** Explicitly passed globals */
         globals: Symply.Globals
+    }
+
+    export interface ActionsConfiguration {
+        preBuild?: Action[]
+        postBuild?: Action[]
+    }
+
+    export type Action =
+        | CopyFileAction
+        | CopyFileToDirectoryAction
+        | CopyFilesToDirectoryAction
+        | MoveFileAction
+        | CopyDirectoryAction
+        | CopyDirectoryToDirectoryAction
+        | EmptyDirectoryAction
+        | RemoveDirectoryAction
+        | RenameFileAction
+        | RenameDirectoryAction
+
+    export interface CopyFileAction {
+        type: 'COPY_FILE'
+        fromFilePath: string | string[]
+        toFilePath: string | string[]
+    }
+
+    export interface CopyFileToDirectoryAction {
+        type: 'COPY_FILE_TO_DIR'
+        fromFilePath: string | string[]
+        toDirPath: string | string[]
+    }
+
+    export type FileFilterFunc = (type: 'DIR' | 'FILE', name: string, extension: string) => boolean
+
+    export interface CopyFilesToDirectoryAction {
+        type: 'COPY_FILES_TO_DIR'
+        fromDirPath: string | string[]
+        toDirPath: string | string[]
+        /** @default () => true */
+        filterFunc?: FileFilterFunc
+    }
+
+    export interface MoveFileAction {
+        type: 'MOVE_FILE'
+        fromFilePath: string | string[]
+        /** Non-existent directories will be automatically created. */
+        toFilePath: string | string[]
+    }
+
+    export interface CopyDirectoryAction {
+        type: 'COPY_DIR'
+        fromDirPath: string | string[]
+        /** Must be the same final directory name as `fromDirPath` */
+        toDirPath: string | string[]
+    }
+
+    export interface CopyDirectoryToDirectoryAction {
+        type: 'COPY_DIR_TO_DIR'
+        fromDirPath: string | string[]
+        toParentDirPath: string | string[]
+    }
+
+    export interface EmptyDirectoryAction {
+        type: 'EMPTY_DIR'
+        dirPath: string | string[]
+    }
+
+    export interface RemoveDirectoryAction {
+        type: 'REMOVE_DIR'
+        dirPath: string | string[]
+    }
+
+    export interface RenameFileAction {
+        type: 'RENAME_FILE'
+        filePath: string | string[]
+        newName: string
+    }
+
+    export interface RenameDirectoryAction {
+        type: 'RENAME_DIR'
+        dirPath: string | string[]
+        newName: string
     }
 
     export type DefaultConfiguration = Symply.PathConfiguration & Symply.CommandLineModeConfiguration

@@ -10,6 +10,7 @@ class Configuration {
     private globals: Symply.Globals = {}
     private partials: Symply.Partials = {}
     private helpers: Symply.Helpers = {}
+    private actions: Symply.ActionsConfiguration = {}
 
     /*-----------------------------------------------------------------------------
      *  System configuration (default values)
@@ -65,6 +66,7 @@ class Configuration {
         this.globals = _.defaultTo(config.entities?.globals, this.globals)
         this.partials = _.defaultTo(config.entities?.partials, this.partials)
         this.helpers = _.defaultTo(config.entities?.helpers, this.helpers)
+        this.actions = _.defaultTo(config.actions, this.actions)
 
         this._debugOutput = _.defaultTo(config.debugOutput, this._debugOutput)
         this._ignoreMissingProperties = _.defaultTo(config.ignoreMissingProperties, this.ignoreMissingProperties)
@@ -136,6 +138,9 @@ class Configuration {
     }
     public getHelpers() {
         return this.helpers
+    }
+    public getActions() {
+        return this.actions
     }
 
     /*-----------------------------------------------------------------------------

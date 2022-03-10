@@ -41,8 +41,65 @@ export async function createDirectoryAsync(dirPath: string): Promise<void> {
     return fs.ensureDir(dirPath)
 }
 
-export async function copyFileAsync(filePath: string, destinationPath: string): Promise<void> {
-    return promisify(fs.copyFile)(filePath, destinationPath)
+export function removeDirectory(dirPath: string) {
+    fs.rmSync(dirPath, { force: true, recursive: true })
+}
+
+export function copyDirectory(srcDirPath: string, destDirPath: string) {
+    fs.copySync(srcDirPath, destDirPath)
+}
+
+export async function copyFileAsync(filePath: string, destinationFilePath: string): Promise<void> {
+    return promisify(fs.copyFile)(filePath, destinationFilePath)
+}
+
+export async function copyFileToDirectoryAsync(filePath: string, destinationDirectoryPath: string): Promise<void> {
+    const fileName = path.basename(filePath)
+    return promisify(fs.copyFile)(filePath, path.join(destinationDirectoryPath, fileName))
+}
+
+export async function copyFilesToDirectoryAsync(
+    srcDirPath: string,
+    destDirPath: string,
+    filterFunc: Symply.FileFilterFunc = () => true
+): Promise<void> {
+    const entities = fs.readdirSync(srcDirPath, { withFileTypes: true })
+
+    for (const entity of entities) {
+        if (entity.isFile()) {
+            if (filterFunc('FILE', entity.name, path.extname(entity.name).slice(1))) {
+                await copyFileAsync(path.join(srcDirPath, entity.name), path.join(destDirPath, entity.name))
+            }
+        } else if (entity.isDirectory()) {
+            if (filterFunc('DIR', entity.name, '')) {
+                copyDirectory(path.join(srcDirPath, entity.name), path.join(destDirPath, entity.name))
+            }
+        } else {
+            throw new Error(`File is not supported: ${entity.name}`)
+        }
+    }
+}
+
+export function renameFile(filePath: string, newName: string) {
+    if (fs.statSync(filePath).isFile()) {
+        fs.renameSync(filePath, path.join(path.dirname(filePath), newName))
+    } else {
+        throw new Error(`Trying to rename an invalid file: ${filePath}`)
+    }
+}
+
+export function renameDirectory(dirPath: string, newName: string) {
+    if (fs.statSync(dirPath).isDirectory()) {
+        fs.renameSync(dirPath, path.join(path.dirname(dirPath), newName))
+    } else {
+        throw new Error(`Trying to rename an invalid directory: ${dirPath}`)
+    }
+}
+
+/** Move file with creating directories if needed. */
+export function moveFile(filePath: string, newFilePath: string) {
+    fs.ensureFileSync(newFilePath)
+    fs.renameSync(filePath, newFilePath)
 }
 
 function scanFilesInDirectory(

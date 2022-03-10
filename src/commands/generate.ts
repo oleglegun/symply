@@ -8,6 +8,7 @@ import configuration from '../configuration'
 import * as Globals from '../entities/globals'
 import * as Helpers from '../entities/helpers'
 import * as Partials from '../entities/partials'
+import * as Actions from '../entities/actions'
 import * as filesystem from '../filesystem'
 import logger from '../logger'
 import ProgressBar from '../progressBar'
@@ -18,6 +19,7 @@ export async function generate(): Promise<Symply.GenerationStats> {
         copiedFilesCount: 0,
     }
 
+    await Actions.runPreBuildAsync(configuration.getActions().preBuild)
     const globals = Globals.load()
     const partials = Partials.load()
 
@@ -54,6 +56,9 @@ export async function generate(): Promise<Symply.GenerationStats> {
     )
 
     stats.copiedFilesCount += copiedFilesCount
+
+    logger.info(`Copied ${stats.copiedFilesCount} files to the distribution directory.`)
+    await Actions.runPostBuildAsync(configuration.getActions().postBuild)
 
     return stats
 }
@@ -94,7 +99,7 @@ async function copySourceFilesToDistributionDirectory(...sourceFilesGroups: File
     })
 
     await Promise.all(copyPromises)
-    return sourceFilesGroups.length
+    return copyPromises.length
 }
 
 function compileSourceFilesAndCopyToDistributionDirectory(
