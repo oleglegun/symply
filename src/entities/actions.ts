@@ -1,6 +1,8 @@
 import ProgressBar from '../progressBar'
 import * as filesystem from '../filesystem'
 import path from 'path'
+import { exec } from 'child_process'
+import logger from '../logger'
 
 export async function runPreBuildAsync(actionList?: Symply.Action[]): Promise<void> {
     if (!actionList || actionList.length === 0) {
@@ -11,8 +13,8 @@ export async function runPreBuildAsync(actionList?: Symply.Action[]): Promise<vo
 
     for (let idx = 0; idx < actionList.length; idx++) {
         const action = actionList[idx]
-        await runAction(action)
         actionRunProgress.tick(`Running PRE-BUILD actions:`, `${idx + 1}/${actionList.length}`)
+        await runAction(action)
     }
 }
 
@@ -25,12 +27,12 @@ export async function runPostBuildAsync(actionList?: Symply.Action[]): Promise<v
 
     for (let idx = 0; idx < actionList.length; idx++) {
         const action = actionList[idx]
-        await runAction(action)
         actionRunProgress.tick(`Running POST-BUILD actions:`, `${idx + 1}/${actionList.length}`)
+        await runAction(action)
     }
 }
 
-async function runAction(action: Symply.Action) {
+async function runAction(action: Symply.Action): Promise<void> {
     switch (action.type) {
         case 'COPY_FILE': {
             await filesystem.copyFileAsync(joinPathIfArray(action.fromFilePath), joinPathIfArray(action.toFilePath))
@@ -82,9 +84,45 @@ async function runAction(action: Symply.Action) {
             filesystem.renameDirectory(joinPathIfArray(action.dirPath), action.newName)
             break
         }
+        case 'RUN_NPM_SCRIPT': {
+            await runShellCmd(`npm run ${action.scriptName}`)
+            break
+        }
+        case 'RUN_SHELL_CMD': {
+            await runShellCmd(joinPathIfArray(action.cmd))
+            break
+        }
+        case 'RUN_JS_SCRIPT': {
+            await runShellCmd(`node ${joinPathIfArray(action.scriptPath)}`)
+            break
+        }
+        case 'CALL_FUNC': {
+            await action.func()
+            break
+        }
     }
 }
 
 function joinPathIfArray(pathObject: string | string[]) {
     return Array.isArray(pathObject) ? path.join(...pathObject) : pathObject
+}
+
+async function runShellCmd(cmd: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        exec(cmd, (error, stdout, stderr) => {
+            if (error) {
+                logger.error(error.message)
+                reject(error)
+                return
+            }
+            if (stderr) {
+                logger.error(stderr)
+            }
+
+            if (stdout.length) {
+                logger.log(`\n${stdout}`)
+            }
+            resolve()
+        })
+    })
 }

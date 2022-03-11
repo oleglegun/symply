@@ -133,6 +133,10 @@ namespace Symply {
         | RemoveDirectoryAction
         | RenameFileAction
         | RenameDirectoryAction
+        | RunNPMScriptAction
+        | RunShellCommandAction
+        | RunJSScriptAction
+        | CallFunctionAction
 
     export interface CopyFileAction {
         type: 'COPY_FILE'
@@ -196,6 +200,26 @@ namespace Symply {
         type: 'RENAME_DIR'
         dirPath: string | string[]
         newName: string
+    }
+
+    export interface RunNPMScriptAction {
+        type: 'RUN_NPM_SCRIPT'
+        scriptName: string
+    }
+
+    export interface RunShellCommandAction {
+        type: 'RUN_SHELL_CMD'
+        cmd: string | string[]
+    }
+
+    export interface RunJSScriptAction {
+        type: 'RUN_JS_SCRIPT'
+        scriptPath: string | string[]
+    }
+
+    export interface CallFunctionAction {
+        type: 'CALL_FUNC'
+        func: () => void | Promise<void>
     }
 
     export type DefaultConfiguration = Symply.PathConfiguration & Symply.CommandLineModeConfiguration

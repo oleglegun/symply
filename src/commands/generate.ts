@@ -125,6 +125,7 @@ function compileSourceFilesAndCopyToDistributionDirectory(
         let resultHTML = ''
 
         try {
+            templateCompilationProgress.tick(`Compiling HTML/HBS files:`, `${idx + 1}/${allTemplateSourceFiles.length}`)
             resultHTML = Handlebars.compile(templateContents)(globals)
 
             if (configuration.minifyOutputHTML) {
@@ -151,7 +152,6 @@ function compileSourceFilesAndCopyToDistributionDirectory(
                 resultHTML = prettier.format(resultHTML, { parser: 'html' })
             }
 
-            templateCompilationProgress.tick(`Compiling HTML/HBS files:`, `${idx + 1}/${allTemplateSourceFiles.length}`)
             stats.generatedFilesCount++
         } catch (err) {
             if (err instanceof RangeError) {
