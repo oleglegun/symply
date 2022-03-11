@@ -122,22 +122,31 @@ namespace Symply {
         postBuild?: Action[]
     }
 
-    export type Action =
-        | CopyFileAction
-        | CopyFileToDirectoryAction
-        | CopyFilesToDirectoryAction
-        | MoveFileAction
-        | CopyDirectoryAction
-        | CopyDirectoryToDirectoryAction
-        | EmptyDirectoryAction
-        | RemoveDirectoryAction
-        | RenameFileAction
-        | RenameDirectoryAction
-        | RunNPMScriptAction
-        | RunShellCommandAction
-        | RunJSScriptAction
-        | CallFunctionAction
+    export type Action = ActionBase &
+        (
+            | CopyFileAction
+            | CopyFileToDirectoryAction
+            | CopyFilesToDirectoryAction
+            | MoveFileAction
+            | CopyDirectoryAction
+            | CopyDirectoryToDirectoryAction
+            | EmptyDirectoryAction
+            | RemoveDirectoryAction
+            | RenameFileAction
+            | RenameDirectoryAction
+            | RunNPMScriptAction
+            | RunShellCommandAction
+            | RunJSScriptAction
+            | CallFunctionAction
+        )
 
+    interface ActionBase {
+        /**
+         * Skip execution of current action
+         *  @default false
+         * */
+        skip?: boolean
+    }
     export interface CopyFileAction {
         type: 'COPY_FILE'
         fromFilePath: string | string[]

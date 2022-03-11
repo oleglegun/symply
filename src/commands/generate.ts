@@ -19,7 +19,7 @@ export async function generate(): Promise<Symply.GenerationStats> {
         copiedFilesCount: 0,
     }
 
-    await Actions.runPreBuildAsync(configuration.getActions().preBuild)
+    await Actions.runPreBuildAsync(configuration.getActions().preBuild?.filter((action) => !action.skip))
     const globals = Globals.load()
     const partials = Partials.load()
 
@@ -58,7 +58,7 @@ export async function generate(): Promise<Symply.GenerationStats> {
     stats.copiedFilesCount += copiedFilesCount
 
     logger.info(`Copied ${stats.copiedFilesCount} files to the distribution directory.`)
-    await Actions.runPostBuildAsync(configuration.getActions().postBuild)
+    await Actions.runPostBuildAsync(configuration.getActions().postBuild?.filter((action) => !action.skip))
 
     return stats
 }
