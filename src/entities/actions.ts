@@ -89,7 +89,7 @@ async function runAction(action: Symply.Action): Promise<void> {
             break
         }
         case 'RUN_SHELL_CMD': {
-            await runShellCmd(joinPathIfArray(action.cmd))
+            await runShellCmd(joinTokensIfArray(action.cmd))
             break
         }
         case 'RUN_JS_SCRIPT': {
@@ -105,6 +105,10 @@ async function runAction(action: Symply.Action): Promise<void> {
 
 function joinPathIfArray(pathObject: string | string[]) {
     return Array.isArray(pathObject) ? path.join(...pathObject) : pathObject
+}
+
+function joinTokensIfArray(tokenObject: string | string[]) {
+    return Array.isArray(tokenObject) ? tokenObject.join(' ') : tokenObject
 }
 
 async function runShellCmd(cmd: string): Promise<void> {
