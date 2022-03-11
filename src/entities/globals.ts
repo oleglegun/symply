@@ -76,6 +76,7 @@ export function load(): Symply.Globals {
      *  [Module mode] Add extra globals if there are any available
      *----------------------------------------------------------------------------*/
     const shadowedGlobalsList = _.intersection(Object.keys(result), Object.keys(configuration.getGlobals()))
+    
     if (shadowedGlobalsList.length !== 0) {
         logger.error(`Some globals are shadowed by module configuration: ${chalk.blueBright(shadowedGlobalsList)}`)
     }

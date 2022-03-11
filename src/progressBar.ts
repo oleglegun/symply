@@ -4,9 +4,13 @@ import configuration from './configuration'
 import type PB from 'progress'
 
 export default class ProgressBar {
+    public static isRunning = false
+
     private progressBar: PB
 
     constructor(tasksNumber: number) {
+        ProgressBar.isRunning = true
+        
         this.progressBar = new Progress(
             (configuration.ansiLogging ? chalk.greenBright('INFO  ') : 'INFO  ') + ':prefix :bar :postfix',
             {
@@ -14,6 +18,9 @@ export default class ProgressBar {
                 complete: configuration.ansiLogging ? chalk.greenBright('▮') : '▮',
                 width: 15,
                 incomplete: configuration.ansiLogging ? chalk.gray('▯') : '▯',
+                callback: () => {
+                    ProgressBar.isRunning = false
+                },
             }
         )
     }

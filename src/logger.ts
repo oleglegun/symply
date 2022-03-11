@@ -1,9 +1,11 @@
 import chalk from 'chalk'
 import configuration from './configuration'
 import stripAnsi from 'strip-ansi'
+import ProgressBar from './progressBar'
 
 export default {
     log(...strings: string[]): void {
+        ProgressBar.isRunning && console.log()
         if (configuration.ansiLogging) {
             console.log(...strings)
         } else {
@@ -14,6 +16,8 @@ export default {
         if (configuration.omitWarnings) {
             return
         }
+
+        ProgressBar.isRunning && console.log()
         if (configuration.ansiLogging) {
             console.log(chalk.yellowBright('WARN '), ...strings)
         } else {
@@ -21,6 +25,7 @@ export default {
         }
     },
     info(...strings: string[]): void {
+        ProgressBar.isRunning && console.log()
         if (configuration.ansiLogging) {
             console.log(chalk.greenBright('INFO '), ...strings)
         } else {
@@ -28,6 +33,7 @@ export default {
         }
     },
     error(...strings: string[]): void {
+        ProgressBar.isRunning && console.log()
         if (configuration.ansiLogging) {
             console.log(chalk.redBright('ERR  '), ...strings)
         } else {
@@ -35,6 +41,7 @@ export default {
         }
     },
     debug(...strings: string[]): void {
+        ProgressBar.isRunning && console.log()
         if (configuration.ansiLogging) {
             console.log(chalk.yellowBright('DEBUG'), ...strings)
         } else {
