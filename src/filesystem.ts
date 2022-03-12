@@ -129,7 +129,7 @@ function scanFilesInDirectory(
     try {
         files = fs.readdirSync(scanPath)
     } catch (err) {
-        if (err.code === 'ENOENT') {
+        if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
             logger.warning('Directory', chalk.blueBright(scanPath), 'is not found.')
         }
     }
