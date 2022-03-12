@@ -49,6 +49,10 @@ export function copyDirectory(srcDirPath: string, destDirPath: string) {
     fs.copySync(srcDirPath, destDirPath)
 }
 
+export function moveDirectory(srcDirPath: string, destDirPath: string) {
+    fs.moveSync(srcDirPath, destDirPath)
+}
+
 export async function copyFileAsync(filePath: string, destinationFilePath: string): Promise<void> {
     return promisify(fs.copyFile)(filePath, destinationFilePath)
 }
@@ -58,21 +62,34 @@ export async function copyFileToDirectoryAsync(filePath: string, destinationDire
     return promisify(fs.copyFile)(filePath, path.join(destinationDirectoryPath, fileName))
 }
 
-export async function copyFilesToDirectoryAsync(
+export function copyOrMoveFilesToDirectory(
+    type: 'COPY' | 'MOVE',
     srcDirPath: string,
     destDirPath: string,
     filterFunc: Symply.FileFilterFunc = () => true
-): Promise<void> {
+): void {
     const entities = fs.readdirSync(srcDirPath, { withFileTypes: true })
+    fs.ensureDirSync(destDirPath)
 
     for (const entity of entities) {
+        const srcPath = path.join(srcDirPath, entity.name)
+        const destPath = path.join(destDirPath, entity.name)
+
         if (entity.isFile()) {
             if (filterFunc('FILE', entity.name, path.extname(entity.name).slice(1))) {
-                await copyFileAsync(path.join(srcDirPath, entity.name), path.join(destDirPath, entity.name))
+                if (type === 'COPY') {
+                    fs.copyFileSync(srcPath, destPath)
+                } else {
+                    moveFile(srcPath, destPath)
+                }
             }
         } else if (entity.isDirectory()) {
             if (filterFunc('DIR', entity.name, '')) {
-                copyDirectory(path.join(srcDirPath, entity.name), path.join(destDirPath, entity.name))
+                if (type === 'COPY') {
+                    copyDirectory(srcPath, destPath)
+                } else {
+                    moveDirectory(srcPath, destPath)
+                }
             }
         } else {
             throw new Error(`File is not supported: ${entity.name}`)

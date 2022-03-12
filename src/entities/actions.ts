@@ -46,7 +46,8 @@ async function runAction(action: Symply.Action): Promise<void> {
             break
         }
         case 'COPY_FILES_TO_DIR': {
-            await filesystem.copyFilesToDirectoryAsync(
+            filesystem.copyOrMoveFilesToDirectory(
+                'COPY',
                 joinPathIfArray(action.fromDirPath),
                 joinPathIfArray(action.toDirPath),
                 action.filterFunc
@@ -57,15 +58,33 @@ async function runAction(action: Symply.Action): Promise<void> {
             filesystem.moveFile(joinPathIfArray(action.fromFilePath), joinPathIfArray(action.toFilePath))
             break
         }
+        case 'MOVE_FILES_TO_DIR': {
+            filesystem.copyOrMoveFilesToDirectory(
+                'MOVE',
+                joinPathIfArray(action.fromDirPath),
+                joinPathIfArray(action.toDirPath),
+                action.filterFunc
+            )
+            break
+        }
         case 'COPY_DIR': {
             filesystem.copyDirectory(joinPathIfArray(action.fromDirPath), joinPathIfArray(action.toDirPath))
             break
         }
+        case 'MOVE_DIR': {
+            filesystem.moveDirectory(joinPathIfArray(action.fromDirPath), joinPathIfArray(action.toDirPath))
+            break
+        }
         case 'COPY_DIR_TO_DIR': {
             const fromDirPath = joinPathIfArray(action.fromDirPath)
-            const toDirName = path.basename(joinPathIfArray(action.fromDirPath))
-            const toDirPath = path.join(joinPathIfArray(action.toParentDirPath), toDirName)
+            const toDirPath = path.join(joinPathIfArray(action.toParentDirPath), path.basename(fromDirPath))
             filesystem.copyDirectory(fromDirPath, toDirPath)
+            break
+        }
+        case 'MOVE_DIR_TO_DIR': {
+            const fromDirPath = joinPathIfArray(action.fromDirPath)
+            const toDirPath = path.join(joinPathIfArray(action.toParentDirPath), path.basename(fromDirPath))
+            filesystem.moveDirectory(fromDirPath, toDirPath)
             break
         }
         case 'REMOVE_DIR': {
@@ -93,7 +112,7 @@ async function runAction(action: Symply.Action): Promise<void> {
             break
         }
         case 'RUN_JS_SCRIPT': {
-            await runShellCmd(`node ${joinPathIfArray(action.scriptPath)}`)
+            await runShellCmd(`node '${joinPathIfArray(action.scriptPath)}'`)
             break
         }
         case 'CALL_FUNC': {
@@ -124,7 +143,7 @@ async function runShellCmd(cmd: string): Promise<void> {
             }
 
             if (stdout.length) {
-                logger.log(`\n${stdout}`)
+                logger.log(stdout)
             }
             resolve()
         })

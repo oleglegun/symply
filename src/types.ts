@@ -128,10 +128,13 @@ namespace Symply {
             | CopyFileToDirectoryAction
             | CopyFilesToDirectoryAction
             | MoveFileAction
+            | MoveFilesToDirectoryAction
             | CopyDirectoryAction
+            | MoveDirectoryAction
             | CopyDirectoryToDirectoryAction
-            | EmptyDirectoryAction
+            | MoveDirectoryToDirectoryAction
             | RemoveDirectoryAction
+            | EmptyDirectoryAction
             | RenameFileAction
             | RenameDirectoryAction
             | RunNPMScriptAction
@@ -146,6 +149,10 @@ namespace Symply {
          *  @default false
          * */
         skip?: boolean
+        /**
+         * Optional action description
+         */
+        info?: string | string[]
     }
     export interface CopyFileAction {
         type: 'COPY_FILE'
@@ -176,15 +183,37 @@ namespace Symply {
         toFilePath: string | string[]
     }
 
+    export interface MoveFilesToDirectoryAction {
+        type: 'MOVE_FILES_TO_DIR'
+        fromDirPath: string | string[]
+        /** Non-existent directories will be automatically created. */
+        toDirPath: string | string[]
+        /** @default () => true */
+        filterFunc?: FileFilterFunc
+    }
+
     export interface CopyDirectoryAction {
         type: 'COPY_DIR'
         fromDirPath: string | string[]
-        /** Must be the same final directory name as `fromDirPath` */
+        /** Must have the same final directory name as `fromDirPath` */
+        toDirPath: string | string[]
+    }
+
+    export interface MoveDirectoryAction {
+        type: 'MOVE_DIR'
+        fromDirPath: string | string[]
+        /** Must have the same final directory name as `fromDirPath` */
         toDirPath: string | string[]
     }
 
     export interface CopyDirectoryToDirectoryAction {
         type: 'COPY_DIR_TO_DIR'
+        fromDirPath: string | string[]
+        toParentDirPath: string | string[]
+    }
+
+    export interface MoveDirectoryToDirectoryAction {
+        type: 'MOVE_DIR_TO_DIR'
         fromDirPath: string | string[]
         toParentDirPath: string | string[]
     }
