@@ -1,6 +1,7 @@
 import chalk from 'chalk'
 import _ from 'lodash'
 import path from 'path'
+
 import logger from './logger'
 
 class Configuration {

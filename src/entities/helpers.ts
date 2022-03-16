@@ -1,8 +1,9 @@
+import chalk from 'chalk'
 import path from 'path'
+
 import configuration from '../configuration'
 import * as filesystem from '../filesystem'
 import logger from '../logger'
-import chalk from 'chalk'
 
 const HELPERS_EXTENSION = '.js'
 

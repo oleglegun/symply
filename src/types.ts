@@ -109,12 +109,12 @@ namespace Symply {
     }
 
     export interface EntitiesConfiguration {
+        /** Explicitly passed globals */
+        globals: Symply.Globals
         /** Explicitly passed partials */
         partials: Symply.Partials
         /** Explicitly passed helpers */
         helpers: Symply.Helpers
-        /** Explicitly passed globals */
-        globals: Symply.Globals
     }
 
     export interface ActionsConfiguration {

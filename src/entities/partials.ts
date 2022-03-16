@@ -1,9 +1,10 @@
-import path from 'path'
-import * as filesystem from '../filesystem'
-import configuration from '../configuration'
-import logger from '../logger'
 import chalk from 'chalk'
 import _ from 'lodash'
+import path from 'path'
+
+import configuration from '../configuration'
+import * as filesystem from '../filesystem'
+import logger from '../logger'
 
 const SUPPORTED_PARTIAL_EXTENTION_LIST = ['.html', '.hbs', '.svg', '.md', '.txt']
 

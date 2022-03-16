@@ -1,8 +1,9 @@
-import ProgressBar from '../progressBar'
-import * as filesystem from '../filesystem'
-import path from 'path'
 import { exec } from 'child_process'
+import path from 'path'
+
+import * as filesystem from '../filesystem'
 import logger from '../logger'
+import ProgressBar from '../progressBar'
 
 export async function runPreBuildAsync(actionList?: Symply.Action[]): Promise<void> {
     if (!actionList || actionList.length === 0) {
@@ -13,7 +14,11 @@ export async function runPreBuildAsync(actionList?: Symply.Action[]): Promise<vo
 
     for (let idx = 0; idx < actionList.length; idx++) {
         const action = actionList[idx]
-        actionRunProgress.tick(`Running PRE-BUILD actions:`, `${idx + 1}/${actionList.length}`)
+        actionRunProgress.tick(
+            `${idx}. ${action.type}`,
+            `Running PRE-BUILD actions:`,
+            `${idx + 1}/${actionList.length}`
+        )
         await runAction(action)
     }
 }
@@ -27,7 +32,11 @@ export async function runPostBuildAsync(actionList?: Symply.Action[]): Promise<v
 
     for (let idx = 0; idx < actionList.length; idx++) {
         const action = actionList[idx]
-        actionRunProgress.tick(`Running POST-BUILD actions:`, `${idx + 1}/${actionList.length}`)
+        actionRunProgress.tick(
+            `${idx}. ${action.type}`,
+            `Running POST-BUILD actions:`,
+            `${idx + 1}/${actionList.length}`
+        )
         await runAction(action)
     }
 }

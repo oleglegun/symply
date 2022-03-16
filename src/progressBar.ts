@@ -1,16 +1,18 @@
 import chalk from 'chalk'
 import Progress from 'progress'
-import configuration from './configuration'
 import type PB from 'progress'
+
+import configuration from './configuration'
 
 export default class ProgressBar {
     public static isRunning = false
+    public static processingEntityInfo = ''
 
     private progressBar: PB
 
     constructor(tasksNumber: number) {
         ProgressBar.isRunning = true
-        
+
         this.progressBar = new Progress(
             (configuration.ansiLogging ? chalk.greenBright('INFO  ') : 'INFO  ') + ':prefix :bar :postfix',
             {
@@ -25,7 +27,9 @@ export default class ProgressBar {
         )
     }
 
-    public tick(barPrefix?: string, barPostfix?: string): void {
+    public tick(processingEntityName: string, barPrefix?: string, barPostfix?: string): void {
+        ProgressBar.processingEntityInfo = processingEntityName
+
         this.progressBar.tick({
             prefix: barPrefix || '',
             postfix: barPostfix || '',

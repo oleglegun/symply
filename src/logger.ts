@@ -1,6 +1,7 @@
 import chalk from 'chalk'
-import configuration from './configuration'
 import stripAnsi from 'strip-ansi'
+
+import configuration from './configuration'
 import ProgressBar from './progressBar'
 
 export default {

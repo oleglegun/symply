@@ -1,8 +1,9 @@
+import chalk from 'chalk'
 import fs from 'fs-extra'
 import path from 'path'
 import { promisify } from 'util'
+
 import logger from './logger'
-import chalk from 'chalk'
 
 export { existsSync } from 'fs'
 

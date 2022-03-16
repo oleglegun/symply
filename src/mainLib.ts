@@ -1,7 +1,8 @@
+import chalk from 'chalk'
+
 import { generate as generateCommand } from './commands/generate'
 import config from './configuration'
 import logger from './logger'
-import chalk from 'chalk'
 
 async function generate(configuration: SymplyConfiguration) {
     const start = Date.now()

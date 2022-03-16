@@ -1,14 +1,16 @@
 import chalk from 'chalk'
 import Handlebars from 'handlebars'
 import { minify } from 'html-minifier'
+import _ from 'lodash'
 import path from 'path'
 import prettier from 'prettier'
 import sass from 'sass'
+
 import configuration from '../configuration'
+import * as Actions from '../entities/actions'
 import * as Globals from '../entities/globals'
 import * as Helpers from '../entities/helpers'
 import * as Partials from '../entities/partials'
-import * as Actions from '../entities/actions'
 import * as filesystem from '../filesystem'
 import logger from '../logger'
 import ProgressBar from '../progressBar'
@@ -118,14 +120,21 @@ function compileSourceFilesAndCopyToDistributionDirectory(
      *  Save results to the distribution directory
      *----------------------------------------------------------------------------*/
     allTemplateSourceFiles.forEach((file, idx) => {
-        const templateContents = filesystem.getFileContents(
-            filesystem.joinAndResolvePath(configuration.getSourceDirectoryPath(), file.dirname, file.name)
+        const absoluteTemplatePath = filesystem.joinAndResolvePath(
+            configuration.getSourceDirectoryPath(),
+            file.dirname,
+            file.name
         )
+        const templateContents = filesystem.getFileContents(absoluteTemplatePath)
 
         let resultHTML = ''
 
         try {
-            templateCompilationProgress.tick(`Compiling HTML/HBS files:`, `${idx + 1}/${allTemplateSourceFiles.length}`)
+            templateCompilationProgress.tick(
+                absoluteTemplatePath,
+                `Compiling HTML/HBS files:`,
+                `${idx + 1}/${allTemplateSourceFiles.length}`
+            )
             resultHTML = Handlebars.compile(templateContents)(globals)
 
             if (configuration.minifyOutputHTML) {
@@ -157,22 +166,17 @@ function compileSourceFilesAndCopyToDistributionDirectory(
             if (err instanceof RangeError) {
                 logger.error(
                     'Recursive partial structure detected. Check your partials and source files. ' +
-                        'Make sure that partials are not calling each other using {{> partialName}}.'
+                        'Make sure that partials are not calling each other using {{> partialName }}.'
                 )
             } else if (err instanceof Error) {
                 const message = err.message
                 let result
-                if ((result = /^The partial (.+) could not be found/.exec(message)?.[1])) {
-                    const targetTemplateFilePath = filesystem.joinAndResolvePath(
-                        configuration.getSourceDirectoryPath(),
-                        file.dirname,
-                        file.name
-                    )
 
+                if ((result = /^The partial (.+) could not be found/.exec(message)?.[1])) {
                     logger.error(
-                        'Partial ' +
-                            chalk.red(`{{> ${result} }}`) +
-                            ` cannot be found (used in ${chalk.blueBright(targetTemplateFilePath)})`
+                        `Missing partial ${chalk.red(`{{> ${result} }}`)}. Check render tree in ${chalk.blueBright(
+                            absoluteTemplatePath
+                        )}`
                     )
                 } else {
                     logger.error(err.message)
@@ -284,7 +288,11 @@ function compileSassAndCopyToDistributionDirectory(
                       .css.toString()
                 : '',
         }
-        sassStylesCompilationProgress.tick('Compiling SASS files:', `${idx + 1}/${sassSourceFiles.length}`)
+        sassStylesCompilationProgress.tick(
+            absoluteFilePath,
+            'Compiling SASS files:',
+            `${idx + 1}/${sassSourceFiles.length}`
+        )
 
         filesystem.createFile(
             filesystem.joinAndResolvePath(
@@ -329,8 +337,40 @@ function registerMissingPropertyHelper() {
         Handlebars.registerHelper('helperMissing', function (...passedArgs) {
             const options = passedArgs[arguments.length - 1]
             const args = Array.prototype.slice.call(passedArgs, 0, arguments.length - 1)
-            logger.error('Missing helper/property: ' + chalk.red(`{{ ${options.name} ${args} }}`))
-            return new Handlebars.SafeString('Missing: ' + options.name + '(' + args + ')')
+            const helperName = options.name
+
+            const lineNumber = options.loc.start.line
+            const hashArgsObj: { [arg: string]: string | number } = options.hash
+
+            const argsStringified = args.length !== 0 ? ' ' + args.map((arg) => `"${arg}"`).join(' ') : ''
+            const hashArgsStringified = _(hashArgsObj)
+                .toPairs()
+                .map(([key, value]) => {
+                    if (typeof value === 'number') {
+                        return `${key}=${value}`
+                    } else {
+                        return `${key}="${value}"`
+                    }
+                })
+                .thru((value) => {
+                    return value.length !== 0 ? ' ' + value.join(' ') : ''
+                })
+                .value()
+
+            const processingEntityPath = ProgressBar.processingEntityInfo
+
+            const missingHelperType =
+                !argsStringified.length && !hashArgsStringified.length ? 'helper/property' : 'helper'
+            const missingHelperExpression = `{{ ${helperName}${argsStringified}${hashArgsStringified} }}`
+
+            logger.error(
+                `Missing ${missingHelperType} ${chalk.red(
+                    missingHelperExpression
+                )}. Check render tree in ${chalk.blueBright(processingEntityPath)} (line number: ${lineNumber}).`
+            )
+            return new Handlebars.SafeString(
+                `<div style="color: red !important">Missing ${missingHelperType} ${missingHelperExpression}</div>`
+            )
         })
     }
 }

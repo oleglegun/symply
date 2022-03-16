@@ -1,11 +1,12 @@
-import * as filesystem from '../filesystem'
-import configuration from '../configuration'
-import logger from '../logger'
-import flat from 'flat'
-import path from 'path'
-import yaml from 'js-yaml'
 import chalk from 'chalk'
+import flat from 'flat'
+import yaml from 'js-yaml'
 import _ from 'lodash'
+import path from 'path'
+
+import configuration from '../configuration'
+import * as filesystem from '../filesystem'
+import logger from '../logger'
 
 enum GLOBALS_EXTENSION {
     JSON = '.json',
@@ -76,7 +77,7 @@ export function load(): Symply.Globals {
      *  [Module mode] Add extra globals if there are any available
      *----------------------------------------------------------------------------*/
     const shadowedGlobalsList = _.intersection(Object.keys(result), Object.keys(configuration.getGlobals()))
-    
+
     if (shadowedGlobalsList.length !== 0) {
         logger.error(`Some globals are shadowed by module configuration: ${chalk.blueBright(shadowedGlobalsList)}`)
     }
