@@ -151,7 +151,6 @@ function compileSourceFilesAndCopyToDistributionDirectory(
                             join_vars: true,
                             drop_console: true,
                         },
-                        // compress: {},
                     },
                     minifyCSS: true,
                     collapseWhitespace: true,
@@ -179,7 +178,9 @@ function compileSourceFilesAndCopyToDistributionDirectory(
                         )}`
                     )
                 } else {
-                    logger.error(err.message)
+                    logger.error(
+                        `${chalk.red(err.message)} (thrown while processing ${chalk.blueBright(absoluteTemplatePath)})`
+                    )
                 }
             }
             process.exit(1)
@@ -276,23 +277,31 @@ function compileSassAndCopyToDistributionDirectory(
         )
         const fileContents = filesystem.getFileContents(absoluteFilePath)
 
-        const compiledSassSourceFile: FileSystem.FileEntry = {
-            name: file.name.replace(/(\.scss|\.sass)$/, '.css'),
-            dirname: file.dirname,
-            contents: fileContents
-                ? sass
-                      .renderSync({
-                          data: fileContents,
-                          includePaths: [absoluteFileDirectoryName],
-                      })
-                      .css.toString()
-                : '',
-        }
         sassStylesCompilationProgress.tick(
             absoluteFilePath,
             'Compiling SASS files:',
             `${idx + 1}/${sassSourceFiles.length}`
         )
+
+        let compiledSassSourceFile: FileSystem.FileEntry
+
+        try {
+            compiledSassSourceFile = {
+                name: file.name.replace(/(\.scss|\.sass)$/, '.css'),
+                dirname: file.dirname,
+                contents: fileContents
+                    ? sass.compileString(fileContents, { loadPaths: [absoluteFileDirectoryName] }).css
+                    : '',
+            }
+        } catch (err) {
+            if (err instanceof Error) {
+                logger.error(
+                    `${chalk.red(err.message)} (thrown while processing ${chalk.blueBright(absoluteFilePath)})`
+                )
+            }
+
+            process.exit(1)
+        }
 
         filesystem.createFile(
             filesystem.joinAndResolvePath(

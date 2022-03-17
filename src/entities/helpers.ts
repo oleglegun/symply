@@ -9,7 +9,7 @@ const HELPERS_EXTENSION = '.js'
 
 export function load(): Symply.Helpers {
     /*-----------------------------------------------------------------------------
-     *  Import namespaced helpers from /helpers
+     *  Import namespaced helpers from `helpers` directory
      *----------------------------------------------------------------------------*/
     const helpersPath = configuration.getHelpersDirectoryPath()
     const helpersFileList = filesystem.scanFiles(helpersPath, true, false, true)

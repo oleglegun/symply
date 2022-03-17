@@ -16,12 +16,12 @@ enum GLOBALS_EXTENSION {
 
 export function load(): Symply.Globals {
     /*-----------------------------------------------------------------------------
-     *  Import namespaced globals from /helpers
+     *  Import namespaced globals from `globals` directory
      *----------------------------------------------------------------------------*/
     const globalsPath = configuration.getGlobalsDirectoryPath()
     const globalsFileList = filesystem.scanFiles(globalsPath, true, false, true)
 
-    // change nested helpers files names to include its enclosing folder
+    // change nested globals files names to include its enclosing folder
     globalsFileList.forEach((globalsFile) => {
         if (globalsFile.dirname !== globalsPath) {
             const enclosingDirName = globalsFile.dirname.replace(globalsPath + path.sep, '')
