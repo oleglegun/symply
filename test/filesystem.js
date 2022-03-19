@@ -1,9 +1,9 @@
 const test = require('tape')
 const path = require('path')
-const { scanFiles, isFileExtensionValid, joinAndResolvePath } = require('../src/fs-helpers')
+const { hasFileExtension, joinAndResolvePath } = require('../dist/filesystem')
 
-test('––––––––––––––––––– fs-helpers.js tests ––––––––––––––––––––', function(t) {
-    t.test('isFileExtensionValid(fileName, validExtensionsList)', function(st) {
+test('––––––––––––––––––– filesystem.js tests ––––––––––––––––––––', function (t) {
+    t.test('hasFileExtension(fileName, validExtensionsList)', function (st) {
         const testCases = [
             {
                 input: ['filename.html', ['html', 'js']],
@@ -21,11 +21,11 @@ test('––––––––––––––––––– fs-helpers.js te
         st.plan(testCases.length)
 
         testCases.forEach(({ input, expected, message }) => {
-            st.equal(isFileExtensionValid(...input), expected, message)
+            st.equal(hasFileExtension(...input), expected, message)
         })
     })
 
-    t.test('joinAndResolvePath(...pathParts)', function(st) {
+    t.test('joinAndResolvePath(...pathParts)', function (st) {
         const testCases = [
             {
                 inputArgs: ['/path1', 'path2'],
