@@ -14,11 +14,17 @@ export function load(): Symply.Helpers {
     const helpersPath = configuration.getHelpersDirectoryPath()
     const helpersFileList = filesystem.scanFiles(helpersPath, true, false, true)
 
-    // change nested helpers files names to include its enclosing folder
+    // change each nested helpers' file name to include its enclosing folder
     helpersFileList.forEach((fileWithHelpers) => {
         if (fileWithHelpers.dirname !== helpersPath) {
-            const enclosingDirName = fileWithHelpers.dirname.replace(helpersPath + path.sep, '')
-            fileWithHelpers.name = enclosingDirName + path.sep + fileWithHelpers.name
+            let enclosingDirName = fileWithHelpers.dirname.replace(helpersPath + path.sep, '')
+
+            if (path.sep === '\\') {
+                // Use platform-independent nested helpers file name
+                enclosingDirName = enclosingDirName.replace(/\\/g, '/')
+            }
+
+            fileWithHelpers.name = `${enclosingDirName}/${fileWithHelpers.name}`
             fileWithHelpers.dirname = helpersPath
         }
         return fileWithHelpers

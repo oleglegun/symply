@@ -18,10 +18,17 @@ export function load(): Symply.Partials {
     // change nestes partials names to include its enclosing folder
     partials.forEach((partial) => {
         if (partial.dirname !== partialsPath) {
-            const enclosingDirName = partial.dirname.replace(partialsPath + path.sep, '')
-            partial.name = enclosingDirName + path.sep + partial.name
+            let enclosingDirName = partial.dirname.replace(partialsPath + path.sep, '')
+
+            if (path.sep === '\\') {
+                // Use platform-independent nested partial file name
+                enclosingDirName = enclosingDirName.replace(/\\/g, '/')
+            }
+
+            partial.name = `${enclosingDirName}/${partial.name}`
             partial.dirname = partialsPath
         }
+
         return partial
     })
 

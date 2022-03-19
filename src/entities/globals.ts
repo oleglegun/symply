@@ -24,10 +24,17 @@ export function load(): Symply.Globals {
     // change nested globals files names to include its enclosing folder
     globalsFileList.forEach((globalsFile) => {
         if (globalsFile.dirname !== globalsPath) {
-            const enclosingDirName = globalsFile.dirname.replace(globalsPath + path.sep, '')
-            globalsFile.name = enclosingDirName + path.sep + globalsFile.name
+            let enclosingDirName = globalsFile.dirname.replace(globalsPath + path.sep, '')
+
+            if (path.sep === '\\') {
+                // Use platform-independent nested globals file name
+                enclosingDirName = enclosingDirName.replace(/\\/g, '/')
+            }
+
+            globalsFile.name = `${enclosingDirName}/${globalsFile.name}`
             globalsFile.dirname = globalsPath
         }
+
         return globalsFile
     })
 
