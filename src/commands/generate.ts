@@ -33,9 +33,17 @@ export async function generate(): Promise<Symply.GenerationStats> {
     registerMissingPropertyHelper()
 
     registerIfEqHelper()
-
+   
     registerIfNeHelper()
+    
+    registerIfGtHelper()
 
+    registerIfGeHelper()
+    
+    registerIfLtHelper()
+    
+    registerIfLeHelper()
+   
     injectGlobalsToHelpers(globals)
 
     clearDistributionDirectoryIfNeeded()
@@ -413,6 +421,82 @@ function registerIfEqHelper() {
 function registerIfNeHelper() {
     Handlebars.registerHelper('if_ne', function (this: Symply.Globals, a, b, options) {
         if (a != b) {
+            return options.fn(this)
+        } else {
+            return options.inverse(this)
+        }
+    })
+}
+
+
+
+/** If greater than Block helper
+ * @example
+ * {{#if_gt var N }}
+ * var > N
+ * {{else}}
+ * var < N
+ * {{/if_gt}}
+ */
+ function registerIfGtHelper() {
+    Handlebars.registerHelper('if_gt', function (this: Symply.Globals, a, b, options) {
+        if (a > b) {
+            return options.fn(this)
+        } else {
+            return options.inverse(this)
+        }
+    })
+}
+
+
+/** If greater or equal than Block helper
+ * @example
+ * {{#if_ge var N }}
+ * var >= N
+ * {{else}}
+ * var <= N
+ * {{/if_ge}}
+ */
+ function registerIfGeHelper() {
+    Handlebars.registerHelper('if_ge', function (this: Symply.Globals, a, b, options) {
+        if (a >= b) {
+            return options.fn(this)
+        } else {
+            return options.inverse(this)
+        }
+    })
+}
+
+/** If less than Block helper
+ * @example
+ * {{#if_lt var N }}
+ * var < N
+ * {{else}}
+ * var > N
+ * {{/if_lt}}
+ */
+ function registerIfLtHelper() {
+    Handlebars.registerHelper('if_lt', function (this: Symply.Globals, a, b, options) {
+        if (a < b) {
+            return options.fn(this)
+        } else {
+            return options.inverse(this)
+        }
+    })
+}
+
+
+/** If less or equal than Block helper
+ * @example
+ * {{#if_le var N }}
+ * var <= N
+ * {{else}}
+ * var >= N
+ * {{/if_le}}
+ */
+ function registerIfLeHelper() {
+    Handlebars.registerHelper('if_le', function (this: Symply.Globals, a, b, options) {
+        if (a <= b) {
             return options.fn(this)
         } else {
             return options.inverse(this)
