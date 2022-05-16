@@ -6,6 +6,7 @@ import path from 'path'
 import prettier from 'prettier'
 import sass from 'sass'
 
+import * as blockHelpers from '../blockHelpers'
 import configuration from '../configuration'
 import * as Actions from '../entities/actions'
 import * as Globals from '../entities/globals'
@@ -32,23 +33,16 @@ export async function generate(): Promise<Symply.GenerationStats> {
 
     registerMissingPropertyHelper()
 
-    registerIfEqHelper()
-
-    registerIfNeHelper()
-
-    registerIfGtHelper()
-
-    registerIfGeHelper()
-
-    registerIfLtHelper()
-
-    registerIfLeHelper()
-
-    registerIfAndHelper()
-
-    registerIfOrHelper()
-
-    registerIfXorHelper()
+    // Block helpers registration
+    blockHelpers.if_eq()
+    blockHelpers.if_ne()
+    blockHelpers.if_gt()
+    blockHelpers.if_ge()
+    blockHelpers.if_lt()
+    blockHelpers.if_le()
+    blockHelpers.if_and()
+    blockHelpers.if_or()
+    blockHelpers.if_xor()
 
     injectGlobalsToHelpers(globals)
 
@@ -396,189 +390,6 @@ function registerMissingPropertyHelper() {
             )
         })
     }
-}
-
-/** IF EQUALS block helper
- * @example
- * {{#if_eq var 'value' }}
- * var === 'value'
- * {{else}}
- * var !== 'value'
- * {{/if_eq}}
- */
-function registerIfEqHelper() {
-    Handlebars.registerHelper('if_eq', function (this: Symply.Globals, a, b, options) {
-        if (a == b) {
-            return options.fn(this)
-        } else {
-            return options.inverse(this)
-        }
-    })
-}
-
-/** IF NOT EQUALS block helper
- * @example
- * {{#if_ne var 'value' }}
- * var !== 'value'
- * {{else}}
- * var === 'value'
- * {{/if_ne}}
- */
-function registerIfNeHelper() {
-    Handlebars.registerHelper('if_ne', function (this: Symply.Globals, a, b, options) {
-        if (a != b) {
-            return options.fn(this)
-        } else {
-            return options.inverse(this)
-        }
-    })
-}
-
-/** IF GREATER THAN block helper
- * @example
- * {{#if_gt var N }}
- * var > N
- * {{else}}
- * var < N
- * {{/if_gt}}
- */
-function registerIfGtHelper() {
-    Handlebars.registerHelper('if_gt', function (this: Symply.Globals, a, b, options) {
-        if (a > b) {
-            return options.fn(this)
-        } else {
-            return options.inverse(this)
-        }
-    })
-}
-
-/** IF GREATER OR EQUAL TO block helper
- * @example
- * {{#if_ge var N }}
- * var >= N
- * {{else}}
- * var <= N
- * {{/if_ge}}
- */
-function registerIfGeHelper() {
-    Handlebars.registerHelper('if_ge', function (this: Symply.Globals, a, b, options) {
-        if (a >= b) {
-            return options.fn(this)
-        } else {
-            return options.inverse(this)
-        }
-    })
-}
-
-/** IF LESS THAN block helper
- * @example
- * {{#if_lt var N }}
- * var < N
- * {{else}}
- * var > N
- * {{/if_lt}}
- */
-function registerIfLtHelper() {
-    Handlebars.registerHelper('if_lt', function (this: Symply.Globals, a, b, options) {
-        if (a < b) {
-            return options.fn(this)
-        } else {
-            return options.inverse(this)
-        }
-    })
-}
-
-/** IF LESS OR EQUAL TO block helper
- * @example
- * {{#if_le var N }}
- * var <= N
- * {{else}}
- * var >= N
- * {{/if_le}}
- */
-function registerIfLeHelper() {
-    Handlebars.registerHelper('if_le', function (this: Symply.Globals, a, b, options) {
-        if (a <= b) {
-            return options.fn(this)
-        } else {
-            return options.inverse(this)
-        }
-    })
-}
-
-/** IF AND block helper
- * @example
- * {{#if_and a b c ... }}
- * a && b && c ... === true
- * {{else}}
- * a && b && c ... === false
- * {{/if_and}}
- */
-function registerIfAndHelper() {
-    Handlebars.registerHelper('if_and', function (this: Symply.Globals, ...args) {
-        if (args.length <= 2) {
-            throw new Error('Block helper #if_and requires 2 or more arguments: {{#if_and a b ... }} {{/if_and}}')
-        }
-
-        const options = args[args.length - 1]
-        const resultBooleanValue = args.slice(0, args.length - 1).every((arg) => arg)
-
-        if (resultBooleanValue) {
-            return options.fn(this)
-        } else {
-            return options.inverse(this)
-        }
-    })
-}
-
-/** IF OR block helper
- * @example
- * {{#if_or a b c ... }}
- * a || b || c ... === true
- * {{else}}
- * a || b || c ... === false
- * {{/if_or}}
- */
-function registerIfOrHelper() {
-    Handlebars.registerHelper('if_or', function (this: Symply.Globals, ...args) {
-        if (args.length <= 2) {
-            throw new Error('Block helper #if_or requires 2 or more arguments: {{#if_or a b ... }} {{/if_or}}')
-        }
-
-        const options = args[args.length - 1]
-        const resultBooleanValue = args.slice(0, args.length - 1).some((arg) => arg)
-
-        if (resultBooleanValue) {
-            return options.fn(this)
-        } else {
-            return options.inverse(this)
-        }
-    })
-}
-
-/** IF XOR block helper
- * @example
- * {{#if_xor a b c ... }}
- * There is at least 1 TRUE value and 1 FALSE value
- * {{else}}
- * All values are TRUE or all values are FALSE
- * {{/if_xor}}
- */
-function registerIfXorHelper() {
-    Handlebars.registerHelper('if_xor', function (this: Symply.Globals, ...args) {
-        if (args.length <= 2) {
-            throw new Error('Block helper #if_xor requires 2 or more arguments: {{#if_xor a b ... }} {{/if_xor}}')
-        }
-
-        const options = args[args.length - 1]
-        const values = args.slice(0, args.length - 1)
-
-        if (values.every((value) => value) || values.every((value) => !value)) {
-            return options.inverse(this)
-        }
-
-        return options.fn(this)
-    })
 }
 
 function scanSourceFiles() {
