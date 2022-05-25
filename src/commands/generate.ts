@@ -2,6 +2,7 @@ import chalk from 'chalk'
 import Handlebars from 'handlebars'
 import { minify } from 'html-minifier'
 import _ from 'lodash'
+import minimatch from 'minimatch'
 import path from 'path'
 import prettier from 'prettier'
 import sass from 'sass'
@@ -297,6 +298,7 @@ function compileSassAndCopyToDistributionDirectory(
             compiledSassSourceFile = {
                 name: file.name.replace(/(\.scss|\.sass)$/, '.css'),
                 dirname: file.dirname,
+                path: file.path,
                 contents: fileContents
                     ? sass.compileString(fileContents, { loadPaths: [absoluteFileDirectoryName] }).css
                     : '',
@@ -393,33 +395,54 @@ function registerMissingPropertyHelper() {
 }
 
 function scanSourceFiles() {
-    const allSourceFiles = filesystem.scanFiles(configuration.getSourceDirectoryPath(), false, true, true)
+    const filesConfiguration = configuration.getFilesConfiguration()
+
+    const allSourceFiles = filesystem
+        .scanFiles(configuration.getSourceDirectoryPath(), false, true, true)
+        .filter((file) => shouldProcessFile(file, filesConfiguration.all))
 
     const htmlSourceFiles = allSourceFiles.filter((file) => {
-        return filesystem.hasFileExtension(file.name, ['html'])
+        return filesystem.hasFileExtension(file.name, ['html']) && shouldProcessFile(file, filesConfiguration.templates)
     })
 
     const hbsSourceFiles = allSourceFiles.filter((file) => {
-        return filesystem.hasFileExtension(file.name, ['hbs'])
+        return filesystem.hasFileExtension(file.name, ['hbs']) && shouldProcessFile(file, filesConfiguration.templates)
     })
 
     const scssSourceFiles = allSourceFiles.filter((file) => {
-        return filesystem.hasFileExtension(file.name, ['sass', 'scss']) && !file.name.startsWith('_')
+        return (
+            filesystem.hasFileExtension(file.name, ['scss', 'sass']) &&
+            !file.name.startsWith('_') &&
+            shouldProcessFile(file, filesConfiguration.styles)
+        )
     })
 
     const cssSourceFiles = allSourceFiles.filter((file) => {
-        return filesystem.hasFileExtension(file.name, ['css'])
+        return filesystem.hasFileExtension(file.name, ['css']) && shouldProcessFile(file, filesConfiguration.styles)
     })
 
     const jsSourceFiles = allSourceFiles.filter((file) => {
-        return filesystem.hasFileExtension(file.name, ['js'])
+        return filesystem.hasFileExtension(file.name, ['js']) && shouldProcessFile(file, filesConfiguration.js)
     })
 
     const otherSourceFiles = allSourceFiles.filter((file) => {
-        return !filesystem.hasFileExtension(file.name, ['html', 'hbs', 'sass', 'scss', 'css', 'js'])
+        return !filesystem.hasFileExtension(file.name, ['html', 'hbs', 'scss', 'sass', 'css', 'js'])
     })
 
     return { scssSourceFiles, cssSourceFiles, htmlSourceFiles, hbsSourceFiles, jsSourceFiles, otherSourceFiles }
+}
+
+function shouldProcessFile(
+    file: FileSystem.FileEntry,
+    regexes: {
+        include: string[]
+        exclude: string[]
+    }
+): boolean {
+    return (
+        !regexes.exclude.some((pattern) => minimatch(file.path, pattern)) &&
+        regexes.include.some((pattern) => minimatch(file.path, pattern))
+    )
 }
 
 function injectHelperContextDecorator(

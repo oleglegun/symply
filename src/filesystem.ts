@@ -152,9 +152,12 @@ function scanFilesInDirectory(
                 contents = fs.readFileSync(relativePath, { encoding: 'utf8' })
             }
 
+            const filePath = basePath ? relativePath.replace(basePath + path.sep, '') : relativePath
+
             result.push({
                 name: filename,
-                dirname: path.dirname(basePath ? relativePath.replace(basePath + path.sep, '') : relativePath),
+                dirname: path.dirname(filePath),
+                path: filePath,
                 contents: contents,
             })
         }

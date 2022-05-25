@@ -1,6 +1,12 @@
 /* eslint-disable */
+
+type DeepPartial<T> = {
+    [P in keyof T]?: DeepPartial<T[P]>
+}
+
 interface SymplyConfiguration extends Partial<Symply.SystemConfiguration> {
-    paths?: Partial<Symply.PathConfiguration>
+    paths?: Partial<Symply.PathsConfiguration>
+    files?: DeepPartial<Symply.FilesConfiguration>
     entities?: Partial<Symply.EntitiesConfiguration>
     actions?: Partial<Symply.ActionsConfiguration>
 }
@@ -74,7 +80,7 @@ namespace Symply {
         clearDistributionDirectoryOnRecompile: boolean
     }
 
-    export interface PathConfiguration {
+    export interface PathsConfiguration {
         /**
          * Set a path to prefix all __default__ SYMPLY directories (relative to your NPM project's root dir).
          * @default ''
@@ -106,6 +112,77 @@ namespace Symply {
          * @default 'helpers'
          **/
         helpersDirectoryPath: string
+    }
+
+    export interface FilesConfiguration {
+        /** Global settings for all processed files in the `sourceDirectoryPath`. */
+        all: {
+            /** 
+             * Define global patterns for all files in the `sourceDirectoryPath` that must be included in the compilation process.
+             * Use forward slash `/` as a path separator on any platform.
+             * @default ['**\/*'] - Process all files, except dotfiles
+             * @example ['*.html', '*.css'] - Process only files that match these patterns
+             */
+            include: string[]
+            /** 
+             * Define global patterns for all files in the `sourceDirectoryPath` that must be excluded from the compilation process.
+             * Use forward slash `/` as a path separator on any platform.
+             * @default []
+             * @example ['test.hbs', 'temp/*'] - Exclude files that match these patterns
+             */
+            exclude: string[]
+        }
+        /** Settings for `.hbs` and `.html` template files compilation in the `sourceDirectoryPath`. */
+        templates: {
+            /** 
+             * Define patterns for `.hbs` and `.html` template files in the `sourceDirectoryPath` that must be included in the compilation process.
+             * Use forward slash `/` as a path separator on any platform.
+             * @default  ['**\/*'] - Process all `.hbs` and `.html` files
+             * @example ['index.hbs', 'articles/*.html'] - Process only files that match these patterns
+             */
+            include: string[]
+            /** 
+             * Define patterns for `.hbs` and `.html` template files in the `sourceDirectoryPath` that must be excluded from the compilation process.
+             * Use forward slash `/` as a path separator on any platform.
+             * @default []
+             * @example ['index.hbs', 'articles/*.html'] - Exclude files that match these patterns
+             */
+            exclude: string[]
+        }
+        /** Settings for `.css`, `.scss` and `.sass` style files compilation in the `sourceDirectoryPath`. */
+        styles: {
+            /** 
+             * Define patterns for `.css`, `.scss` and `.sass` style files in the `sourceDirectoryPath` that must be included in the compilation process.
+             * Use forward slash `/` as a path separator on any platform.
+             * @default  ['**\/*'] - Process all `.css`, `.scss` and `.sass` style files
+             * @example ['styles.css', 'styles/*.scss'] - Process only files that match these patterns
+             */
+            include: string[]
+            /** 
+             * Define patterns for `.css`, `.scss` and `.sass` style files in the `sourceDirectoryPath` that must be excluded from the compilation process.
+             * Use forward slash `/` as a path separator on any platform.
+             * @default []
+             * @example ['styles.test.css', 'styles/test.scss'] - Exclude files that match these patterns
+             */
+            exclude: string[]
+        }
+        /** Settings for `.js` script files compilation in the `sourceDirectoryPath`. */
+        js: {
+            /** 
+             * Define patterns for `.js` script files in the `sourceDirectoryPath` that must be included in the compilation process.
+             * Use forward slash `/` as a path separator on any platform.
+             * @default  ['**\/*'] - Process all `.js` script files
+             * @example ['main.js', 'js/*.js'] - Process only files that match these patterns
+             */
+            include: string[]
+            /** 
+             * Define patterns for `.js` script files in the `sourceDirectoryPath` that must be excluded from the compilation process.
+             * Use forward slash `/` as a path separator on any platform.
+             * @default []
+             * @example ['analytics.js', 'js/*.test.js'] - Exclude files that match these patterns
+             */
+            exclude: string[]
+        }
     }
 
     export interface EntitiesConfiguration {
@@ -260,8 +337,8 @@ namespace Symply {
         func: () => void | Promise<void>
     }
 
-    export type DefaultConfiguration = Symply.PathConfiguration & Symply.CommandLineModeConfiguration
-    export type ModuleModeConfiguration = PathConfiguration & EntitiesConfiguration
+    export type DefaultConfiguration = Symply.PathsConfiguration & Symply.CommandLineModeConfiguration
+    export type ModuleModeConfiguration = PathsConfiguration & EntitiesConfiguration
 
     export type CommandLineModeConfiguration = SystemConfiguration & {
         /** @default 3000 */
@@ -276,8 +353,11 @@ namespace Symply {
 
 namespace FileSystem {
     export interface FileEntry {
+        /** File name with extension */
         name: string
         dirname: string
+        /** File path relative to `sourceDirectoryPath`. */
+        path: string
         contents: string
     }
 }

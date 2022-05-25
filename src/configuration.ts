@@ -59,6 +59,28 @@ class Configuration {
     private configurationFilePath = 'symply-config.yaml'
 
     /*-----------------------------------------------------------------------------
+     *  Files configuration (default values)
+     *----------------------------------------------------------------------------*/
+    private filesConfiguration: Symply.FilesConfiguration = {
+        all: {
+            include: ['**/*'],
+            exclude: [],
+        },
+        templates: {
+            include: ['**/*'],
+            exclude: [],
+        },
+        styles: {
+            include: ['**/*'],
+            exclude: [],
+        },
+        js: {
+            include: ['**/*'],
+            exclude: [],
+        },
+    }
+
+    /*-----------------------------------------------------------------------------
      *  Public methods
      *----------------------------------------------------------------------------*/
 
@@ -110,6 +132,8 @@ class Configuration {
         )
 
         this.configurationFilePath = this.getDirectoryPathAndAddPrefixIfNeeded(undefined, this.configurationFilePath)
+
+        this.filesConfiguration = _.defaultsDeep(config.files, this.filesConfiguration)
 
         this.validateConfiguration()
     }
@@ -182,6 +206,13 @@ class Configuration {
         } else {
             return _.defaultTo(newDirectoryPath, defaultDirectoryPath)
         }
+    }
+
+    /*-----------------------------------------------------------------------------
+     *  Public include/exclude user configiration getters
+     *----------------------------------------------------------------------------*/
+    public getFilesConfiguration() {
+        return this.filesConfiguration
     }
 }
 
