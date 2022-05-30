@@ -1,5 +1,6 @@
 import chalk from 'chalk'
 import fs from 'fs-extra'
+import junk from 'junk'
 import path from 'path'
 import { promisify } from 'util'
 
@@ -10,19 +11,23 @@ export { existsSync } from 'fs'
 /*-----------------------------------------------------------------------------
  * Public functions
  *----------------------------------------------------------------------------*/
-
 export function scanFiles(
     scanPath: string,
     /** Read file contents into memory */
     readFileContents: boolean,
     /** If true - scanPath will be removed from FileEntry.dirname. */
     removeScanPath: boolean,
-    scanNestedDirectories: boolean
+    scanNestedDirectories: boolean,
+    /**
+     * Ignore files like: `.DS_Store`, `Thumbs.db` and etc.
+     * {@link https://github.com/sindresorhus/junk/blob/main/index.js}
+     * @default true */
+    ignoreJunkFiles = true
 ): FileSystem.FileEntry[] {
     if (removeScanPath) {
-        return scanFilesInDirectory(scanPath, scanPath, readFileContents, scanNestedDirectories)
+        return scanFilesInDirectory(scanPath, scanPath, readFileContents, scanNestedDirectories, ignoreJunkFiles)
     }
-    return scanFilesInDirectory(scanPath, '', readFileContents, scanNestedDirectories)
+    return scanFilesInDirectory(scanPath, '', readFileContents, scanNestedDirectories, ignoreJunkFiles)
 }
 
 export function hasFileExtension(fileName: string, validExtensionsList: string[]): boolean {
@@ -124,7 +129,8 @@ function scanFilesInDirectory(
     scanPath: string,
     basePath: string,
     readFileContents: boolean,
-    scanNestedDirectories: boolean
+    scanNestedDirectories: boolean,
+    ignoreJunkFiles = true
 ): FileSystem.FileEntry[] {
     let files: string[] = []
     try {
@@ -140,6 +146,10 @@ function scanFilesInDirectory(
     files.forEach((filename) => {
         const relativePath = path.join(scanPath, filename)
         const stats = fs.statSync(relativePath)
+
+        if (ignoreJunkFiles && junk.is(filename)) {
+            return
+        }
 
         if (stats.isDirectory()) {
             if (scanNestedDirectories) {

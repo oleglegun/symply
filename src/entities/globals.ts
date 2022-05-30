@@ -16,9 +16,9 @@ enum GLOBALS_EXTENSION {
 
 export function load(): Symply.Globals {
     /*-----------------------------------------------------------------------------
-     *  Import namespaced globals from `globals` directory
+     *  Import namespaced globals from `globalsDirectoryPath`
      *----------------------------------------------------------------------------*/
-    const globalsPath = configuration.getGlobalsDirectoryPath()
+    const globalsPath = configuration.globalsDirectoryPath
     const globalsFileList = filesystem.scanFiles(globalsPath, true, false, true)
 
     // change nested globals files names to include its enclosing folder
@@ -83,18 +83,17 @@ export function load(): Symply.Globals {
     /*-----------------------------------------------------------------------------
      *  [Module mode] Add extra globals if there are any available
      *----------------------------------------------------------------------------*/
-    const shadowedGlobalsList = _.intersection(Object.keys(result), Object.keys(configuration.getGlobals()))
+    const shadowedGlobalsList = _.intersection(Object.keys(result), Object.keys(configuration.globals))
 
     if (shadowedGlobalsList.length !== 0) {
         logger.error(`Some globals are shadowed by module configuration: ${chalk.blueBright(shadowedGlobalsList)}`)
     }
 
-    Object.assign(result, configuration.getGlobals())
+    Object.assign(result, configuration.globals)
 
     if (configuration.debugOutput) {
         logger.debug('Registered globals:')
         logger.log(flat.flatten(result, { maxDepth: 1 }))
-        logger.log()
     }
 
     return result

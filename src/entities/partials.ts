@@ -10,9 +10,9 @@ const SUPPORTED_PARTIAL_EXTENTION_LIST = ['.html', '.hbs', '.svg', '.md', '.txt'
 
 export function load(): Symply.Partials {
     /*-----------------------------------------------------------------------------
-     *  Import partials from /partials
+     *  Import partials from `partialsDirectoryPath`
      *----------------------------------------------------------------------------*/
-    const partialsPath = configuration.getPartialsDirectoryPath()
+    const partialsPath = configuration.partialsDirectoryPath
     const partials = filesystem.scanFiles(partialsPath, true, false, true)
 
     // change nestes partials names to include its enclosing folder
@@ -35,6 +35,11 @@ export function load(): Symply.Partials {
     const result = partials.reduce<Symply.Partials>((acc, partial) => {
         const partialNameWithoutExtension = getPartialNameWithoutExtension(partial.name)
 
+        if (partialNameWithoutExtension === null) {
+            logger.error(`Partial file ${chalk.blueBright(partial.path)} is not supported.`)
+            process.exit(1)
+        }
+
         if (acc[partialNameWithoutExtension] !== undefined) {
             const duplicatePartialPath = `${partial.dirname}${path.sep}${partialNameWithoutExtension}.*`
 
@@ -53,25 +58,28 @@ export function load(): Symply.Partials {
     /*-----------------------------------------------------------------------------
      *  [Module mode] Add extra partials if there are any available
      *----------------------------------------------------------------------------*/
-    const shadowedPartialsList = _.intersection(Object.keys(result), Object.keys(configuration.getPartials()))
+    const shadowedPartialsList = _.intersection(Object.keys(result), Object.keys(configuration.partials))
     if (shadowedPartialsList.length !== 0) {
         logger.error(`Some partials are shadowed by module configuration: ${chalk.blueBright(shadowedPartialsList)}`)
     }
 
-    Object.assign(result, configuration.getPartials())
+    Object.assign(result, configuration.partials)
 
     if (configuration.debugOutput) {
-        logger.debug('Registered partials:')
+        logger.debug(`Registered ${partials.length} partial${partials.length === 1 ? '' : 's'}:`)
         Object.keys(result).forEach((key) => {
-            logger.log(chalk.green(key))
+            logger.logWithPadding(chalk.green(key))
         })
-        logger.log()
     }
 
     return result
 }
 
-function getPartialNameWithoutExtension(fileName: string): string {
-    const re = `(${SUPPORTED_PARTIAL_EXTENTION_LIST.map((ext) => '\\' + ext).join('|')})$`
-    return fileName.replace(new RegExp(re), '')
+function getPartialNameWithoutExtension(fileName: string) {
+    if (SUPPORTED_PARTIAL_EXTENTION_LIST.some((supportedExtension) => fileName.endsWith(supportedExtension))) {
+        const re = `(${SUPPORTED_PARTIAL_EXTENTION_LIST.map((ext) => '\\' + ext).join('|')})$`
+        return fileName.replace(new RegExp(re), '')
+    }
+
+    return null
 }

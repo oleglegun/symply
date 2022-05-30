@@ -1,21 +1,22 @@
 import chalk from 'chalk'
 import Handlebars from 'handlebars'
-import { minify } from 'html-minifier'
-import _ from 'lodash'
 import minimatch from 'minimatch'
 import path from 'path'
-import prettier from 'prettier'
-import sass from 'sass'
 
-import * as blockHelpers from '../blockHelpers'
 import configuration from '../configuration'
 import * as Actions from '../entities/actions'
 import * as Globals from '../entities/globals'
 import * as Helpers from '../entities/helpers'
 import * as Partials from '../entities/partials'
 import * as filesystem from '../filesystem'
+import * as helperRigistration from '../handlebars/helpers'
+import * as unusedPartials from '../handlebars/unusedPartials'
 import logger from '../logger'
 import ProgressBar from '../progressBar'
+import * as htmlFormatter from '../tools/htmlFormatter'
+import * as htmlMinifier from '../tools/htmlMinifier'
+import * as sassCompiler from '../tools/sassCompiler'
+import * as tsTranspiler from '../tools/tsTranspiler'
 
 export async function generate(): Promise<Symply.GenerationStats> {
     const stats: Symply.GenerationStats = {
@@ -23,41 +24,69 @@ export async function generate(): Promise<Symply.GenerationStats> {
         copiedFilesCount: 0,
     }
 
-    await Actions.runPreBuildAsync(configuration.getActions().preBuild?.filter((action) => !action.skip))
+    configuration.debugOutput && unusedPartials.initUnusedPartialsDetector()
+
+    await Actions.runPreBuildAsync(configuration.actions.preBuild?.filter((action) => !action.skip))
     const globals = Globals.load()
     const partials = Partials.load()
 
-    const { scssSourceFiles, cssSourceFiles, htmlSourceFiles, hbsSourceFiles, jsSourceFiles, otherSourceFiles } =
-        scanSourceFiles()
-
     registerPartials(partials)
 
-    registerMissingPropertyHelper()
+    helperRigistration.helperMissing()
 
     // Block helpers registration
-    blockHelpers.if_eq()
-    blockHelpers.if_ne()
-    blockHelpers.if_gt()
-    blockHelpers.if_ge()
-    blockHelpers.if_lt()
-    blockHelpers.if_le()
-    blockHelpers.if_and()
-    blockHelpers.if_or()
-    blockHelpers.if_xor()
+    helperRigistration.if_eq()
+    helperRigistration.if_ne()
+    helperRigistration.if_gt()
+    helperRigistration.if_ge()
+    helperRigistration.if_lt()
+    helperRigistration.if_le()
+    helperRigistration.if_and()
+    helperRigistration.if_or()
+    helperRigistration.if_xor()
 
     injectGlobalsToHelpers(globals)
 
     clearDistributionDirectoryIfNeeded()
 
+    /*-----------------------------------------------------------------------------
+     *  Processing files from `sourceDirectoryPath`
+     *----------------------------------------------------------------------------*/
+    const {
+        scssSourceFiles,
+        cssSourceFiles,
+        htmlSourceFiles,
+        hbsSourceFiles,
+        jsSourceFiles,
+        tsSourceFiles,
+        otherSourceFiles,
+    } = scanSourceFiles()
+
+    /*-----------------------------------------------------------------------------
+     *  Styles
+     *----------------------------------------------------------------------------*/
     const compiledSassSourceFiles = compileSassAndCopyToDistributionDirectory(scssSourceFiles, stats)
-
     const cssSourceFilesWithContents = loadSourceFilesContents(cssSourceFiles)
+
+    helperRigistration.embeddedStyles([...compiledSassSourceFiles, ...cssSourceFilesWithContents])
+
+    /*-----------------------------------------------------------------------------
+     *  Scripts
+     *----------------------------------------------------------------------------*/
     const jsSourceFilesWithContents = loadSourceFilesContents(jsSourceFiles)
+    const tsSourceFilesWithContents = loadSourceFilesContents(tsSourceFiles)
 
-    registerEmbeddedStylesInjectorHelper([...compiledSassSourceFiles, ...cssSourceFilesWithContents])
+    const tsTranspiledSourceFilesWithContents = transpileTypescriptFilesAndCopyToDistributionDirectory(
+        tsSourceFilesWithContents,
+        jsSourceFiles,
+        stats
+    )
 
-    registerEmbeddedScriptInjectorHelper(jsSourceFilesWithContents)
+    helperRigistration.embeddedScript([...jsSourceFilesWithContents, ...tsTranspiledSourceFilesWithContents])
 
+    /*-----------------------------------------------------------------------------
+     *  Templates
+     *----------------------------------------------------------------------------*/
     compileSourceFilesAndCopyToDistributionDirectory(htmlSourceFiles, hbsSourceFiles, globals, stats)
 
     const copiedFilesCount = await copySourceFilesToDistributionDirectory(
@@ -69,20 +98,78 @@ export async function generate(): Promise<Symply.GenerationStats> {
     stats.copiedFilesCount += copiedFilesCount
 
     logger.info(`Copied ${stats.copiedFilesCount} files to the distribution directory.`)
-    await Actions.runPostBuildAsync(configuration.getActions().postBuild?.filter((action) => !action.skip))
+
+    /*-----------------------------------------------------------------------------
+     *  Actions
+     *----------------------------------------------------------------------------*/
+    await Actions.runPostBuildAsync(configuration.actions.postBuild?.filter((action) => !action.skip))
+
+    configuration.debugOutput && unusedPartials.printUnusedPartialsMessage(partials)
 
     return stats
 }
 
 function loadSourceFilesContents(sourceFiles: FileSystem.FileEntry[]): FileSystem.FileEntry[] {
     return sourceFiles.map((file) => {
-        const absolutePath = filesystem.joinAndResolvePath(
-            configuration.getSourceDirectoryPath(),
-            file.dirname,
-            file.name
-        )
+        const absolutePath = filesystem.joinAndResolvePath(configuration.sourceDirectoryPath, file.dirname, file.name)
         return { ...file, contents: filesystem.getFileContents(absolutePath) }
     })
+}
+
+function transpileTypescriptFilesAndCopyToDistributionDirectory(
+    tsSourceFiles: FileSystem.FileEntry[],
+    /** JS source files to detect possible shadowing by TS files */
+    jsSourceFiles: FileSystem.FileEntry[],
+    stats: Symply.GenerationStats
+): FileSystem.FileEntry[] {
+    const typescriptCompilationProgress = new ProgressBar(tsSourceFiles.length)
+    const createdFileSet = new Set()
+
+    jsSourceFiles.forEach((file) => {
+        createdFileSet.add(file.path)
+    })
+
+    const files: FileSystem.FileEntry[] = []
+
+    tsSourceFiles.forEach((file, idx) => {
+        const absoluteTsFilePath = filesystem.joinAndResolvePath(configuration.sourceDirectoryPath, file.path)
+        typescriptCompilationProgress.tick(
+            absoluteTsFilePath,
+            `Compiling TS files:`,
+            `${idx + 1}/${tsSourceFiles.length}`
+        )
+
+        const tsFileTranspiledContents = tsTranspiler.transpile(file.contents)
+
+        files.push({
+            name: file.name,
+            dirname: file.dirname,
+            path: file.path,
+            contents: tsFileTranspiledContents,
+        })
+
+        stats.generatedFilesCount++
+
+        const outputJsFileName = file.name.replace(/(\.ts)$/, '.js')
+        const sourceFilePath = path.join(file.dirname, outputJsFileName)
+
+        if (createdFileSet.has(sourceFilePath)) {
+            logger.warning(
+                `Detected JS/TS source files with the same name ${chalk.blueBright(
+                    sourceFilePath.replace(/\.js$/, '.*')
+                )}, but different extensions. TypeScript file compilation skipped.`
+            )
+        } else {
+            createdFileSet.add(sourceFilePath)
+
+            filesystem.createFile(
+                filesystem.joinAndResolvePath(configuration.distributionDirectoryPath, file.dirname, outputJsFileName),
+                tsFileTranspiledContents
+            )
+        }
+    })
+
+    return files
 }
 
 async function copySourceFilesToDistributionDirectory(...sourceFilesGroups: FileSystem.FileEntry[][]): Promise<number> {
@@ -91,13 +178,13 @@ async function copySourceFilesToDistributionDirectory(...sourceFilesGroups: File
     sourceFilesGroups.forEach((group) => {
         group.forEach((file) => {
             const srcFilePath = filesystem.joinAndResolvePath(
-                configuration.getSourceDirectoryPath(),
+                configuration.sourceDirectoryPath,
                 file.dirname,
                 file.name
             )
-            const fileDir = filesystem.joinAndResolvePath(configuration.getDistributionDirectoryPath(), file.dirname)
+            const fileDir = filesystem.joinAndResolvePath(configuration.distributionDirectoryPath, file.dirname)
             const distFilePath = filesystem.joinAndResolvePath(
-                configuration.getDistributionDirectoryPath(),
+                configuration.distributionDirectoryPath,
                 file.dirname,
                 file.name
             )
@@ -130,7 +217,7 @@ function compileSourceFilesAndCopyToDistributionDirectory(
      *----------------------------------------------------------------------------*/
     allTemplateSourceFiles.forEach((file, idx) => {
         const absoluteTemplatePath = filesystem.joinAndResolvePath(
-            configuration.getSourceDirectoryPath(),
+            configuration.sourceDirectoryPath,
             file.dirname,
             file.name
         )
@@ -147,26 +234,9 @@ function compileSourceFilesAndCopyToDistributionDirectory(
             resultHTML = Handlebars.compile(templateContents)(globals)
 
             if (configuration.minifyOutputHTML) {
-                resultHTML = minify(resultHTML, {
-                    minifyJS: {
-                        mangle: true,
-                        compress: {
-                            sequences: true,
-                            dead_code: true,
-                            conditionals: true,
-                            booleans: true,
-                            unused: true,
-                            if_return: true,
-                            join_vars: true,
-                            drop_console: true,
-                        },
-                    },
-                    minifyCSS: true,
-                    collapseWhitespace: true,
-                    removeComments: true,
-                })
+                resultHTML = htmlMinifier.minify(resultHTML)
             } else if (configuration.formatOutputHTML) {
-                resultHTML = prettier.format(resultHTML, { parser: 'html' })
+                resultHTML = htmlFormatter.format(resultHTML)
             }
 
             stats.generatedFilesCount++
@@ -210,7 +280,7 @@ function compileSourceFilesAndCopyToDistributionDirectory(
 
             filesystem.createFile(
                 filesystem.joinAndResolvePath(
-                    configuration.getDistributionDirectoryPath(),
+                    configuration.distributionDirectoryPath,
                     file.dirname,
                     outputHTMLFileName
                 ),
@@ -220,54 +290,6 @@ function compileSourceFilesAndCopyToDistributionDirectory(
     })
 }
 
-function registerEmbeddedStylesInjectorHelper(compiledSassSourceFiles: FileSystem.FileEntry[]) {
-    Handlebars.registerHelper('embeddedStyles', embeddedStylesHelper)
-
-    function embeddedStylesHelper(cssFilePath: string, data: Handlebars.HelperOptions) {
-        const cssStyles = compiledSassSourceFiles.find((file) => {
-            return path.join(file.dirname, file.name) === cssFilePath
-        })
-
-        if (!cssStyles) {
-            logger.error(
-                `CSS file ${filesystem.joinAndResolvePath(
-                    configuration.getDistributionDirectoryPath(),
-                    cssFilePath
-                )} is not found.`
-            )
-            process.exit(1)
-        }
-
-        return new Handlebars.SafeString(
-            (data.hash.attributes ? `<style ${data.hash.attributes}>` : `<style>`) + cssStyles.contents + '</style>'
-        )
-    }
-}
-
-function registerEmbeddedScriptInjectorHelper(scriptSourceFiles: FileSystem.FileEntry[]) {
-    Handlebars.registerHelper('embeddedScript', embeddedScriptHelper)
-
-    function embeddedScriptHelper(scriptFilePath: string, data: Handlebars.HelperOptions) {
-        const scriptFile = scriptSourceFiles.find((file) => {
-            return path.join(file.dirname, file.name) === scriptFilePath
-        })
-
-        if (!scriptFile) {
-            logger.error(
-                `Script file ${filesystem.joinAndResolvePath(
-                    configuration.getDistributionDirectoryPath(),
-                    scriptFilePath
-                )} is not found.`
-            )
-            process.exit(1)
-        }
-
-        return new Handlebars.SafeString(
-            (data.hash.attributes ? `<script ${data.hash.attributes}>` : '<script>') + scriptFile.contents + '</script>'
-        )
-    }
-}
-
 function compileSassAndCopyToDistributionDirectory(
     sassSourceFiles: FileSystem.FileEntry[],
     stats: Symply.GenerationStats
@@ -275,12 +297,9 @@ function compileSassAndCopyToDistributionDirectory(
     const sassStylesCompilationProgress = new ProgressBar(sassSourceFiles.length)
 
     const compiledSassSourceFiles: FileSystem.FileEntry[] = sassSourceFiles.map((file, idx) => {
-        const absoluteFileDirectoryName = filesystem.joinAndResolvePath(
-            configuration.getSourceDirectoryPath(),
-            file.dirname
-        )
+        const absoluteFileDirectoryName = filesystem.joinAndResolvePath(configuration.sourceDirectoryPath, file.dirname)
         const absoluteFilePath = filesystem.joinAndResolvePath(
-            configuration.getSourceDirectoryPath(),
+            configuration.sourceDirectoryPath,
             file.dirname,
             file.name
         )
@@ -299,9 +318,7 @@ function compileSassAndCopyToDistributionDirectory(
                 name: file.name.replace(/(\.scss|\.sass)$/, '.css'),
                 dirname: file.dirname,
                 path: file.path,
-                contents: fileContents
-                    ? sass.compileString(fileContents, { loadPaths: [absoluteFileDirectoryName] }).css
-                    : '',
+                contents: fileContents ? sassCompiler.compile(fileContents, absoluteFileDirectoryName) : '',
             }
         } catch (err) {
             if (err instanceof Error) {
@@ -315,7 +332,7 @@ function compileSassAndCopyToDistributionDirectory(
 
         filesystem.createFile(
             filesystem.joinAndResolvePath(
-                configuration.getDistributionDirectoryPath(),
+                configuration.distributionDirectoryPath,
                 compiledSassSourceFile.dirname,
                 compiledSassSourceFile.name
             ),
@@ -331,7 +348,7 @@ function compileSassAndCopyToDistributionDirectory(
 
 function clearDistributionDirectoryIfNeeded() {
     if (configuration.clearDistributionDirectoryOnRecompile) {
-        const absoluteDistDirectoryPath = filesystem.joinAndResolvePath(configuration.getDistributionDirectoryPath())
+        const absoluteDistDirectoryPath = filesystem.joinAndResolvePath(configuration.distributionDirectoryPath)
         logger.info(`Clearing distribution directory: ${chalk.blueBright(absoluteDistDirectoryPath)}`)
         filesystem.clearDirectoryContents(absoluteDistDirectoryPath)
     }
@@ -351,54 +368,11 @@ function injectGlobalsToHelpers(globals: Symply.Globals) {
     })
 }
 
-function registerMissingPropertyHelper() {
-    if (!configuration.ignoreMissingProperties) {
-        Handlebars.registerHelper('helperMissing', function (...passedArgs) {
-            const options = passedArgs[arguments.length - 1]
-            const args = Array.prototype.slice.call(passedArgs, 0, arguments.length - 1)
-            const helperName = options.name
-
-            const lineNumber = options.loc.start.line
-            const hashArgsObj: { [arg: string]: string | number } = options.hash
-
-            const argsStringified = args.length !== 0 ? ' ' + args.map((arg) => `"${arg}"`).join(' ') : ''
-            const hashArgsStringified = _(hashArgsObj)
-                .toPairs()
-                .map(([key, value]) => {
-                    if (typeof value === 'number') {
-                        return `${key}=${value}`
-                    } else {
-                        return `${key}="${value}"`
-                    }
-                })
-                .thru((value) => {
-                    return value.length !== 0 ? ' ' + value.join(' ') : ''
-                })
-                .value()
-
-            const processingEntityPath = ProgressBar.processingEntityInfo
-
-            const missingHelperType =
-                !argsStringified.length && !hashArgsStringified.length ? 'helper/property' : 'helper'
-            const missingHelperExpression = `{{ ${helperName}${argsStringified}${hashArgsStringified} }}`
-
-            logger.error(
-                `Missing ${missingHelperType} ${chalk.red(
-                    missingHelperExpression
-                )}. Check render tree in ${chalk.blueBright(processingEntityPath)} (line number: ${lineNumber}).`
-            )
-            return new Handlebars.SafeString(
-                `<div style="color: red !important">Missing ${missingHelperType} ${missingHelperExpression}</div>`
-            )
-        })
-    }
-}
-
 function scanSourceFiles() {
-    const filesConfiguration = configuration.getFilesConfiguration()
+    const filesConfiguration = configuration.filesConfiguration
 
     const allSourceFiles = filesystem
-        .scanFiles(configuration.getSourceDirectoryPath(), false, true, true)
+        .scanFiles(configuration.sourceDirectoryPath, false, true, true)
         .filter((file) => shouldProcessFile(file, filesConfiguration.all))
 
     const htmlSourceFiles = allSourceFiles.filter((file) => {
@@ -425,11 +399,23 @@ function scanSourceFiles() {
         return filesystem.hasFileExtension(file.name, ['js']) && shouldProcessFile(file, filesConfiguration.js)
     })
 
-    const otherSourceFiles = allSourceFiles.filter((file) => {
-        return !filesystem.hasFileExtension(file.name, ['html', 'hbs', 'scss', 'sass', 'css', 'js'])
+    const tsSourceFiles = allSourceFiles.filter((file) => {
+        return filesystem.hasFileExtension(file.name, ['ts']) && shouldProcessFile(file, filesConfiguration.js)
     })
 
-    return { scssSourceFiles, cssSourceFiles, htmlSourceFiles, hbsSourceFiles, jsSourceFiles, otherSourceFiles }
+    const otherSourceFiles = allSourceFiles.filter((file) => {
+        return !filesystem.hasFileExtension(file.name, ['html', 'hbs', 'scss', 'sass', 'css', 'js', 'ts'])
+    })
+
+    return {
+        scssSourceFiles,
+        cssSourceFiles,
+        htmlSourceFiles,
+        hbsSourceFiles,
+        jsSourceFiles,
+        tsSourceFiles,
+        otherSourceFiles,
+    }
 }
 
 function shouldProcessFile(

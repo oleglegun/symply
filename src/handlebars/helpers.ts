@@ -1,4 +1,119 @@
+import chalk from 'chalk'
 import Handlebars from 'handlebars'
+import _ from 'lodash'
+import path from 'path'
+
+import configuration from '../configuration'
+import * as filesystem from '../filesystem'
+import logger from '../logger'
+import ProgressBar from '../progressBar'
+
+/** Embedded styles injector helper.
+ * @example
+ * {{embeddedStyles 'css/styles.css' attributes='media="(min-width: 500px) and (max-width: 1000px)"' }}
+ */
+export function embeddedStyles(compiledSassSourceFiles: FileSystem.FileEntry[]) {
+    Handlebars.registerHelper('embeddedStyles', embeddedStylesHelper)
+
+    function embeddedStylesHelper(cssFilePath: string, data: Handlebars.HelperOptions) {
+        const cssStyles = compiledSassSourceFiles.find((file) => {
+            return path.join(file.dirname, file.name) === cssFilePath
+        })
+
+        if (!cssStyles) {
+            logger.error(
+                `CSS file ${filesystem.joinAndResolvePath(
+                    configuration.distributionDirectoryPath,
+                    cssFilePath
+                )} is not found.`
+            )
+            process.exit(1)
+        }
+
+        return new Handlebars.SafeString(
+            (data.hash.attributes ? `<style ${data.hash.attributes}>` : `<style>`) + cssStyles.contents + '</style>'
+        )
+    }
+}
+
+/** Embedded script injector helper.
+ * @example
+ * {{embeddedScript 'js/tooltip.js' attributes='async type="module"' }}
+ */
+export function embeddedScript(scriptSourceFiles: FileSystem.FileEntry[]) {
+    Handlebars.registerHelper('embeddedScript', embeddedScriptHelper)
+
+    function embeddedScriptHelper(scriptFilePath: string, data: Handlebars.HelperOptions) {
+        const scriptFile = scriptSourceFiles.find((file) => {
+            return path.join(file.dirname, file.name) === scriptFilePath
+        })
+
+        if (!scriptFile) {
+            logger.error(
+                `Script file ${filesystem.joinAndResolvePath(
+                    configuration.distributionDirectoryPath,
+                    scriptFilePath
+                )} is not found.`
+            )
+            process.exit(1)
+        }
+
+        return new Handlebars.SafeString(
+            (data.hash.attributes ? `<script ${data.hash.attributes}>` : '<script>') +
+                '(function () {\n' +
+                scriptFile.contents.trim() +
+                '\n})()</script>'
+        )
+    }
+}
+
+/** Missing property helper [Handlebars built-in hook]. */
+export function helperMissing() {
+    if (!configuration.ignoreMissingProperties) {
+        Handlebars.registerHelper('helperMissing', function (...passedArgs) {
+            const options = passedArgs[arguments.length - 1]
+            const args = Array.prototype.slice.call(passedArgs, 0, arguments.length - 1)
+            const helperName = options.name
+
+            const lineNumber = options.loc.start.line
+            const hashArgsObj: { [arg: string]: string | number } = options.hash
+
+            const argsStringified = args.length !== 0 ? ' ' + args.map((arg) => `"${arg}"`).join(' ') : ''
+            const hashArgsStringified = _(hashArgsObj)
+                .toPairs()
+                .map(([key, value]) => {
+                    if (typeof value === 'number') {
+                        return `${key}=${value}`
+                    } else {
+                        return `${key}="${value}"`
+                    }
+                })
+                .thru((value) => {
+                    return value.length !== 0 ? ' ' + value.join(' ') : ''
+                })
+                .value()
+
+            const processingEntityPath = ProgressBar.processingEntityInfo
+
+            const missingHelperType =
+                !argsStringified.length && !hashArgsStringified.length ? 'helper/property' : 'helper'
+            const missingHelperExpression = `{{ ${helperName}${argsStringified}${hashArgsStringified} }}`
+
+            logger.error(
+                `Missing ${missingHelperType} ${chalk.red(
+                    missingHelperExpression
+                )}. Check render tree in ${chalk.blueBright(processingEntityPath)} (line number: ${lineNumber}).`
+            )
+            return new Handlebars.SafeString(
+                `<div style="color: red !important">Missing ${missingHelperType} ${missingHelperExpression}</div>`
+            )
+        })
+    }
+}
+
+/*-----------------------------------------------------------------------------
+ *  Block helpers
+ *----------------------------------------------------------------------------*/
 
 /** IF EQUALS block helper
  * @example

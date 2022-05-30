@@ -2,16 +2,31 @@ import chalk from 'chalk'
 import _ from 'lodash'
 import path from 'path'
 
+import * as filesystem from './filesystem'
 import logger from './logger'
+import * as jsoncParser from './tools/jsoncParser'
 
 class Configuration {
     /*-----------------------------------------------------------------------------
      *  Explicitly passed entities to merge with those from files (module mode only)
      *----------------------------------------------------------------------------*/
-    private globals: Symply.Globals = {}
-    private partials: Symply.Partials = {}
-    private helpers: Symply.Helpers = {}
-    private actions: Symply.ActionsConfiguration = {}
+    private _globals: Symply.Globals = {}
+    private _partials: Symply.Partials = {}
+    private _helpers: Symply.Helpers = {}
+    private _actions: Symply.ActionsConfiguration = {}
+
+    public get globals() {
+        return this._globals
+    }
+    public get partials() {
+        return this._partials
+    }
+    public get helpers() {
+        return this._helpers
+    }
+    public get actions() {
+        return this._actions
+    }
 
     /*-----------------------------------------------------------------------------
      *  System configuration (default values)
@@ -26,6 +41,9 @@ class Configuration {
 
     public get debugOutput() {
         return this._debugOutput
+    }
+    public get ignoreMissingProperties() {
+        return this._ignoreMissingProperties
     }
     public get formatOutputHTML() {
         return this._formatOutputHTML
@@ -42,26 +60,40 @@ class Configuration {
     public get clearDistributionDirectoryOnRecompile() {
         return this._clearDistributionDirectoryOnRecompile
     }
-    public get ignoreMissingProperties() {
-        return this._ignoreMissingProperties
-    }
 
     /*-----------------------------------------------------------------------------
      *  Paths (default values)
      *----------------------------------------------------------------------------*/
     private defaultDirectoriesPrefix = ''
-    private sourceDirectoryPath = 'src'
-    private distributionDirectoryPath = 'dist'
-    private globalsDirectoryPath = 'globals'
-    private partialsDirectoryPath = 'partials'
-    private helpersDirectoryPath = 'helpers'
 
-    private configurationFilePath = 'symply-config.yaml'
+    private _sourceDirectoryPath: Symply.ConfigurableDirectoryPath = { default: 'src', custom: null }
+    private _distributionDirectoryPath: Symply.ConfigurableDirectoryPath = { default: 'dist', custom: null }
+    private _globalsDirectoryPath: Symply.ConfigurableDirectoryPath = { default: 'globals', custom: null }
+    private _partialsDirectoryPath: Symply.ConfigurableDirectoryPath = { default: 'partials', custom: null }
+    private _helpersDirectoryPath: Symply.ConfigurableDirectoryPath = { default: 'helpers', custom: null }
+
+    public get sourceDirectoryPath() {
+        return this.getPrefixedDirectoryPath(this._sourceDirectoryPath)
+    }
+    public get distributionDirectoryPath() {
+        return this.getPrefixedDirectoryPath(this._distributionDirectoryPath)
+    }
+    public get globalsDirectoryPath() {
+        return this.getPrefixedDirectoryPath(this._globalsDirectoryPath)
+    }
+    public get partialsDirectoryPath() {
+        return this.getPrefixedDirectoryPath(this._partialsDirectoryPath)
+    }
+    public get helpersDirectoryPath() {
+        return this.getPrefixedDirectoryPath(this._helpersDirectoryPath)
+    }
 
     /*-----------------------------------------------------------------------------
      *  Files configuration (default values)
      *----------------------------------------------------------------------------*/
-    private filesConfiguration: Symply.FilesConfiguration = {
+    private configurationFilePathList = ['symply-config.json', 'symply-config.jsonc']
+
+    private _filesConfiguration: Symply.FilesConfiguration = {
         all: {
             include: ['**/*'],
             exclude: [],
@@ -78,62 +110,76 @@ class Configuration {
             include: ['**/*'],
             exclude: [],
         },
+        ts: {
+            include: ['**/*'],
+            exclude: [],
+            compilerOptions: {},
+        },
+    }
+
+    public get filesConfiguration() {
+        return this._filesConfiguration
     }
 
     /*-----------------------------------------------------------------------------
      *  Public methods
      *----------------------------------------------------------------------------*/
+    public loadConfigurationFromConfigFile(): SymplyConfiguration | null {
+        for (let i = 0; i < this.configurationFilePathList.length; i++) {
+            const configurationFilePath = this.configurationFilePathList[i]
 
-    /** Explicitly set configuration (module mode only) */
-    public setModuleModeConfiguration(config: SymplyConfiguration) {
-        this.globals = _.defaultTo(config.entities?.globals, this.globals)
-        this.partials = _.defaultTo(config.entities?.partials, this.partials)
-        this.helpers = _.defaultTo(config.entities?.helpers, this.helpers)
-        this.actions = _.defaultTo(config.actions, this.actions)
+            try {
+                const configuration = jsoncParser.parse<SymplyConfiguration>(
+                    filesystem.getFileContents(configurationFilePath)
+                )
 
-        this._debugOutput = _.defaultTo(config.debugOutput, this._debugOutput)
-        this._ignoreMissingProperties = _.defaultTo(config.ignoreMissingProperties, this.ignoreMissingProperties)
-        this._formatOutputHTML = _.defaultTo(config.formatOutputHTML, this._formatOutputHTML)
-        this._minifyOutputHTML = _.defaultTo(config.minifyOutputHTML, this._minifyOutputHTML)
-        this._omitWarnings = _.defaultTo(config.omitWarnings, this._omitWarnings)
-        this._ansiLogging = _.defaultTo(config.ansiLogging, this._ansiLogging)
-        this._clearDistributionDirectoryOnRecompile = _.defaultTo(
-            config.clearDistributionDirectoryOnRecompile,
-            this.clearDistributionDirectoryOnRecompile
-        )
+                logger.info(`Detected ${chalk.blueBright(configurationFilePath)} configuration file.`)
 
-        this.defaultDirectoriesPrefix = _.defaultTo(
-            config.paths?.defaultDirectoriesPrefix,
-            this.defaultDirectoriesPrefix
-        )
+                if (configuration === undefined) {
+                    logger.warning(`Cannot parse configuration file.`)
+                    break
+                }
 
-        /*-----------------------------------------------------------------------------
-         *  Initialize all directories and (if needed) add prefixes to all default ones
-         *----------------------------------------------------------------------------*/
-        this.sourceDirectoryPath = this.getDirectoryPathAndAddPrefixIfNeeded(
-            config.paths?.sourceDirectoryPath,
-            this.sourceDirectoryPath
-        )
-        this.distributionDirectoryPath = this.getDirectoryPathAndAddPrefixIfNeeded(
-            config.paths?.distributionDirectoryPath,
-            this.distributionDirectoryPath
-        )
-        this.globalsDirectoryPath = this.getDirectoryPathAndAddPrefixIfNeeded(
-            config.paths?.globalsDirectoryPath,
-            this.globalsDirectoryPath
-        )
-        this.partialsDirectoryPath = this.getDirectoryPathAndAddPrefixIfNeeded(
-            config.paths?.partialsDirectoryPath,
-            this.partialsDirectoryPath
-        )
-        this.helpersDirectoryPath = this.getDirectoryPathAndAddPrefixIfNeeded(
-            config.paths?.helpersDirectoryPath,
-            this.helpersDirectoryPath
-        )
+                return configuration
+            } catch (err) {
+                if (this.isErrorWithCodeProperty(err)) {
+                    if (err.code === 'ENOENT') {
+                        continue
+                    }
+                }
 
-        this.configurationFilePath = this.getDirectoryPathAndAddPrefixIfNeeded(undefined, this.configurationFilePath)
+                throw err
+            }
+        }
 
-        this.filesConfiguration = _.defaultsDeep(config.files, this.filesConfiguration)
+        return null
+    }
+
+    public mergeConfigurationAndVerify(config: SymplyConfiguration) {
+        this._globals = _.defaultsDeep(config.entities?.globals, this._globals)
+        this._partials = _.defaultsDeep(config.entities?.partials, this._partials)
+        this._helpers = _.defaultsDeep(config.entities?.helpers, this._helpers)
+        this._actions = config.actions ?? this._actions
+
+        this._debugOutput = config.debugOutput ?? this._debugOutput
+        this._ignoreMissingProperties = config.ignoreMissingProperties ?? this._ignoreMissingProperties
+        this._formatOutputHTML = config.formatOutputHTML ?? this._formatOutputHTML
+        this._minifyOutputHTML = config.minifyOutputHTML ?? this._minifyOutputHTML
+        this._omitWarnings = config.omitWarnings ?? this._omitWarnings
+        this._ansiLogging = config.ansiLogging ?? this._ansiLogging
+        this._clearDistributionDirectoryOnRecompile =
+            config.clearDistributionDirectoryOnRecompile ?? this._clearDistributionDirectoryOnRecompile
+
+        this.defaultDirectoriesPrefix = config.paths?.defaultDirectoriesPrefix ?? this.defaultDirectoriesPrefix
+
+        this._sourceDirectoryPath.custom = config.paths?.sourceDirectoryPath ?? this._sourceDirectoryPath.custom
+        this._distributionDirectoryPath.custom =
+            config.paths?.distributionDirectoryPath ?? this._distributionDirectoryPath.custom
+        this._globalsDirectoryPath.custom = config.paths?.globalsDirectoryPath ?? this._globalsDirectoryPath.custom
+        this._partialsDirectoryPath.custom = config.paths?.partialsDirectoryPath ?? this._partialsDirectoryPath.custom
+        this._helpersDirectoryPath.custom = config.paths?.helpersDirectoryPath ?? this._helpersDirectoryPath.custom
+
+        this._filesConfiguration = _.defaultsDeep(config.files, this._filesConfiguration)
 
         this.validateConfiguration()
     }
@@ -153,66 +199,17 @@ class Configuration {
     }
 
     /*-----------------------------------------------------------------------------
-     *  Public entities getters
-     *----------------------------------------------------------------------------*/
-    public getGlobals() {
-        return this.globals
-    }
-    public getPartials() {
-        return this.partials
-    }
-    public getHelpers() {
-        return this.helpers
-    }
-    public getActions() {
-        return this.actions
-    }
-
-    /*-----------------------------------------------------------------------------
-     *  Public path getters
-     *----------------------------------------------------------------------------*/
-    public getSourceDirectoryPath() {
-        return this.sourceDirectoryPath
-    }
-    public getDistributionDirectoryPath() {
-        return this.distributionDirectoryPath
-    }
-    public getGlobalsDirectoryPath() {
-        return this.globalsDirectoryPath
-    }
-    public getPartialsDirectoryPath() {
-        return this.partialsDirectoryPath
-    }
-    public getHelpersDirectoryPath() {
-        return this.helpersDirectoryPath
-    }
-    public getConfigurationFilePath() {
-        return this.configurationFilePath
-    }
-
-    /*-----------------------------------------------------------------------------
      *  Private methods
      *----------------------------------------------------------------------------*/
-    private getDirectoryPathAndAddPrefixIfNeeded(
-        newDirectoryPath: string | undefined,
-        defaultDirectoryPath: string
-    ): string {
-        if (this.defaultDirectoriesPrefix.length > 0) {
-            if (!newDirectoryPath) {
-                return path.join(this.defaultDirectoriesPrefix, defaultDirectoryPath)
-            } else {
-                return newDirectoryPath
-            }
-        } else {
-            return _.defaultTo(newDirectoryPath, defaultDirectoryPath)
+    private getPrefixedDirectoryPath(directoryPath: Symply.ConfigurableDirectoryPath) {
+        if (directoryPath.custom !== null && directoryPath.custom.length > 0) {
+            return directoryPath.custom
         }
+        return path.join(this.defaultDirectoriesPrefix, directoryPath.default)
     }
 
-    /*-----------------------------------------------------------------------------
-     *  Public include/exclude user configiration getters
-     *----------------------------------------------------------------------------*/
-    public getFilesConfiguration() {
-        return this.filesConfiguration
+    private isErrorWithCodeProperty(error: unknown): error is Error & { code: string } {
+        return error instanceof Error && typeof Reflect.get(error, 'code') === 'string'
     }
 }
 

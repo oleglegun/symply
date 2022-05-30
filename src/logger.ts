@@ -13,6 +13,9 @@ export default {
             console.log(stripAnsi(strings.join(' ')))
         }
     },
+    logWithPadding(...strings: string[]) {
+        return this.log('     ', ...strings)
+    },
     warning(...strings: string[]): void {
         if (configuration.omitWarnings) {
             return
