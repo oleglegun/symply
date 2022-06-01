@@ -27,7 +27,16 @@ export default class ProgressBar {
         )
     }
 
-    public tick(processingEntityName: string, barPrefix?: string, barPostfix?: string): void {
+    public render(barPrefix?: string, barPostfix?: string) {
+        this.progressBar.render({ prefix: barPrefix || '', postfix: barPostfix || '' })
+    }
+
+    public tick(
+        /** Used for logging file path on error */
+        processingEntityName: string,
+        barPrefix?: string,
+        barPostfix?: string
+    ): void {
         ProgressBar.processingEntityInfo = processingEntityName
 
         this.progressBar.tick({

@@ -1,5 +1,4 @@
 /* eslint-disable */
-
 type DeepPartial<T> = {
     [P in keyof T]?: DeepPartial<T[P]>
 }
@@ -204,7 +203,37 @@ namespace Symply {
              * @example ['analytics.ts', 'ts/*.test.ts'] - Exclude files that match these patterns
              */
             exclude: string[]
-            compilerOptions: import('typescript').CompilerOptions
+            /**
+             * Check TypeScript code for errors. Significantly slows down the transpile process.
+             * @default false
+             */
+            enableLinter: boolean
+            /**
+             * Define TypeScript configuration options like you do in `tsconfig.json`.
+             * @example {"target": "ES2017", ...}
+             */
+            configuration: {
+                /**
+                 * Do not emit any JS files on lint error. Setting is considered only when linter is enabled.
+                 * @default true
+                 */
+                noEmitOnError: boolean
+                /**
+                 * @default 'ES2015'
+                 */
+                target:
+                    | 'ES3'
+                    | 'ES5'
+                    | 'ES2015'
+                    | 'ES2016'
+                    | 'ES2017'
+                    | 'ES2018'
+                    | 'ES2019'
+                    | 'ES2020'
+                    | 'ES2021'
+                    | 'ES2022'
+                    | 'ESNext'
+            }
         }
     }
 
@@ -360,13 +389,6 @@ namespace Symply {
         func: () => void | Promise<void>
     }
 
-    export type DefaultConfiguration = Symply.PathsConfiguration & Symply.CommandLineModeConfiguration
-    export type ModuleModeConfiguration = PathsConfiguration & EntitiesConfiguration
-
-    export type CommandLineModeConfiguration = SystemConfiguration & {
-        /** @default 3000 */
-        developmentServerPort: number
-    }
 
     export interface GenerationStats {
         generatedFilesCount: number
@@ -376,12 +398,27 @@ namespace Symply {
 
 namespace FileSystem {
     export interface FileEntry {
-        /** File name with extension. */
+        /**
+         * Contains path that this file path is relative to.
+         * @example
+         * '/' - means relative to root (absolute path)
+         * '/lib' - means relative to '/lib' (relative path)
+         */
+        scanPath: string
+        /** File name without extension. */
         name: string
-        /** File path relative to `sourceDirectoryPath` without file name. */
-        dirname: string
-        /** File path relative to `sourceDirectoryPath`. */
+        /**
+         * File extension.
+         * @example '.html'
+         */
+        ext: string
+        /** File name with extension. */
+        base: string
+        /** File path (without base) relative to `scanPath`. */
+        dir: string
+        /** File path (with base) relative to `scanPath`. */
         path: string
+        /** File contents if file read was performed. */
         contents: string
     }
 }

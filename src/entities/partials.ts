@@ -1,4 +1,5 @@
 import chalk from 'chalk'
+import Handlebars from 'handlebars'
 import _ from 'lodash'
 import path from 'path'
 
@@ -7,6 +8,8 @@ import * as filesystem from '../filesystem'
 import logger from '../logger'
 
 const SUPPORTED_PARTIAL_EXTENTION_LIST = ['.html', '.hbs', '.svg', '.md', '.txt']
+
+const resolvedPartialsSet = new Set()
 
 export function load(): Symply.Partials {
     /*-----------------------------------------------------------------------------
@@ -17,23 +20,23 @@ export function load(): Symply.Partials {
 
     // change nestes partials names to include its enclosing folder
     partials.forEach((partial) => {
-        if (partial.dirname !== partialsPath) {
-            let enclosingDirName = partial.dirname.replace(partialsPath + path.sep, '')
+        if (partial.dir !== partialsPath) {
+            let enclosingDirName = partial.dir.replace(partialsPath + path.sep, '')
 
             if (path.sep === '\\') {
                 // Use platform-independent nested partial file name
                 enclosingDirName = enclosingDirName.replace(/\\/g, '/')
             }
 
-            partial.name = `${enclosingDirName}/${partial.name}`
-            partial.dirname = partialsPath
+            partial.base = `${enclosingDirName}/${partial.base}`
+            partial.dir = partialsPath
         }
 
         return partial
     })
 
     const result = partials.reduce<Symply.Partials>((acc, partial) => {
-        const partialNameWithoutExtension = getPartialNameWithoutExtension(partial.name)
+        const partialNameWithoutExtension = getPartialNameWithoutExtension(partial.base)
 
         if (partialNameWithoutExtension === null) {
             logger.error(`Partial file ${chalk.blueBright(partial.path)} is not supported.`)
@@ -41,7 +44,7 @@ export function load(): Symply.Partials {
         }
 
         if (acc[partialNameWithoutExtension] !== undefined) {
-            const duplicatePartialPath = `${partial.dirname}${path.sep}${partialNameWithoutExtension}.*`
+            const duplicatePartialPath = `${partial.dir}${path.sep}${partialNameWithoutExtension}.*`
 
             logger.warning(
                 `Detected partials with the same name ${chalk.blueBright(
@@ -82,4 +85,23 @@ function getPartialNameWithoutExtension(fileName: string) {
     }
 
     return null
+}
+
+export function initUnusedPartialsDetector() {
+    const resolvePartialFunc = Handlebars.VM.resolvePartial
+
+    // Decorate internal Handlebars function
+    Handlebars.VM.resolvePartial = (partial, context, options) => {
+        resolvedPartialsSet.add(options.name)
+        return resolvePartialFunc(partial, context, options)
+    }
+}
+
+export function printUnusedPartialsList(allPartialsList: Symply.Partials) {
+    const unusedPartialNameList = _.difference(Object.keys(allPartialsList), Array.from(resolvedPartialsSet))
+    logger.debug(`Unused ${unusedPartialNameList.length} partial${unusedPartialNameList.length === 1 ? '' : 's'}:`)
+
+    unusedPartialNameList.forEach((key) => {
+        logger.logWithPadding(chalk.redBright(key))
+    })
 }

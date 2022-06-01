@@ -15,12 +15,12 @@ export function scanFiles(
     scanPath: string,
     /** Read file contents into memory */
     readFileContents: boolean,
-    /** If true - scanPath will be removed from FileEntry.dirname. */
+    /** If true - scanPath will be removed from `FileEntry.dir`. */
     removeScanPath: boolean,
     scanNestedDirectories: boolean,
     /**
      * Ignore files like: `.DS_Store`, `Thumbs.db` and etc.
-     * {@link https://github.com/sindresorhus/junk/blob/main/index.js}
+     * https://github.com/sindresorhus/junk/blob/main/index.js
      * @default true */
     ignoreJunkFiles = true
 ): FileSystem.FileEntry[] {
@@ -164,9 +164,14 @@ function scanFilesInDirectory(
 
             const filePath = basePath ? relativePath.replace(basePath + path.sep, '') : relativePath
 
+            const fp = path.parse(filePath)
+
             result.push({
-                name: filename,
-                dirname: path.dirname(filePath),
+                scanPath: path.resolve(basePath),
+                name: fp.name,
+                base: fp.base,
+                ext: fp.ext,
+                dir: fp.dir,
                 path: filePath,
                 contents: contents,
             })
@@ -204,6 +209,10 @@ export function createFileIfNotExists(filePath: string, contents?: string) {
 export function createFile(filePath: string, contents?: string) {
     fs.ensureFileSync(filePath)
     fs.writeFileSync(filePath, contents || '', { encoding: 'utf8' })
+}
+
+export function joinPath(...pathParts: string[]): string {
+    return path.join(...pathParts)
 }
 
 export function joinAndResolvePath(...pathParts: string[]): string {

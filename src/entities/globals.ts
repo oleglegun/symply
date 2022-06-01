@@ -23,23 +23,23 @@ export function load(): Symply.Globals {
 
     // change nested globals files names to include its enclosing folder
     globalsFileList.forEach((globalsFile) => {
-        if (globalsFile.dirname !== globalsPath) {
-            let enclosingDirName = globalsFile.dirname.replace(globalsPath + path.sep, '')
+        if (globalsFile.dir !== globalsPath) {
+            let enclosingDirName = globalsFile.dir.replace(globalsPath + path.sep, '')
 
             if (path.sep === '\\') {
                 // Use platform-independent nested globals file name
                 enclosingDirName = enclosingDirName.replace(/\\/g, '/')
             }
 
-            globalsFile.name = `${enclosingDirName}/${globalsFile.name}`
-            globalsFile.dirname = globalsPath
+            globalsFile.base = `${enclosingDirName}/${globalsFile.base}`
+            globalsFile.dir = globalsPath
         }
 
         return globalsFile
     })
 
     const result = globalsFileList.reduce<Symply.Globals>((acc, globalsFile) => {
-        const fileNameWithExtension = globalsFile.name
+        const fileNameWithExtension = globalsFile.base
 
         let parsedContents
         let globalsNameWithoutExtension

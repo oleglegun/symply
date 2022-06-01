@@ -1,5 +1,6 @@
 import chalk from 'chalk'
 import Handlebars from 'handlebars'
+import _ from 'lodash'
 import minimatch from 'minimatch'
 import path from 'path'
 
@@ -10,7 +11,6 @@ import * as Helpers from '../entities/helpers'
 import * as Partials from '../entities/partials'
 import * as filesystem from '../filesystem'
 import * as helperRigistration from '../handlebars/helpers'
-import * as unusedPartials from '../handlebars/unusedPartials'
 import logger from '../logger'
 import ProgressBar from '../progressBar'
 import * as htmlFormatter from '../tools/htmlFormatter'
@@ -24,7 +24,7 @@ export async function generate(): Promise<Symply.GenerationStats> {
         copiedFilesCount: 0,
     }
 
-    configuration.debugOutput && unusedPartials.initUnusedPartialsDetector()
+    configuration.debugOutput && Partials.initUnusedPartialsDetector()
 
     await Actions.runPreBuildAsync(configuration.actions.preBuild?.filter((action) => !action.skip))
     const globals = Globals.load()
@@ -76,7 +76,7 @@ export async function generate(): Promise<Symply.GenerationStats> {
     const jsSourceFilesWithContents = loadSourceFilesContents(jsSourceFiles)
     const tsSourceFilesWithContents = loadSourceFilesContents(tsSourceFiles)
 
-    const tsTranspiledSourceFilesWithContents = transpileTypescriptFilesAndCopyToDistributionDirectory(
+    const tsTranspiledSourceFilesWithContents = transpileTSFilesAndCopyToDistributionDirectory(
         tsSourceFilesWithContents,
         jsSourceFiles,
         stats
@@ -104,72 +104,43 @@ export async function generate(): Promise<Symply.GenerationStats> {
      *----------------------------------------------------------------------------*/
     await Actions.runPostBuildAsync(configuration.actions.postBuild?.filter((action) => !action.skip))
 
-    configuration.debugOutput && unusedPartials.printUnusedPartialsMessage(partials)
+    configuration.debugOutput && Partials.printUnusedPartialsList(partials)
 
     return stats
 }
 
 function loadSourceFilesContents(sourceFiles: FileSystem.FileEntry[]): FileSystem.FileEntry[] {
     return sourceFiles.map((file) => {
-        const absolutePath = filesystem.joinAndResolvePath(configuration.sourceDirectoryPath, file.dirname, file.name)
+        const absolutePath = filesystem.joinAndResolvePath(configuration.sourceDirectoryPath, file.dir, file.base)
         return { ...file, contents: filesystem.getFileContents(absolutePath) }
     })
 }
 
-function transpileTypescriptFilesAndCopyToDistributionDirectory(
+function transpileTSFilesAndCopyToDistributionDirectory(
     tsSourceFiles: FileSystem.FileEntry[],
     /** JS source files to detect possible shadowing by TS files */
     jsSourceFiles: FileSystem.FileEntry[],
     stats: Symply.GenerationStats
 ): FileSystem.FileEntry[] {
-    const typescriptCompilationProgress = new ProgressBar(tsSourceFiles.length)
-    const createdFileSet = new Set()
+    const duplicateJSFilePathList = _.intersection(
+        jsSourceFiles.map((f) => filesystem.joinPath(f.scanPath, f.dir, f.name)),
+        tsSourceFiles.map((f) => filesystem.joinPath(f.scanPath, f.dir, f.name))
+    )
 
-    jsSourceFiles.forEach((file) => {
-        createdFileSet.add(file.path)
-    })
+    if (duplicateJSFilePathList.length !== 0) {
+        logger.error(`Detected JS/TS source files with the same name, but different extensions:`)
+        duplicateJSFilePathList.forEach((dup) => logger.logWithPadding(chalk.blueBright`${dup}.*`))
 
-    const files: FileSystem.FileEntry[] = []
+        process.exit(1)
+    }
 
-    tsSourceFiles.forEach((file, idx) => {
-        const absoluteTsFilePath = filesystem.joinAndResolvePath(configuration.sourceDirectoryPath, file.path)
-        typescriptCompilationProgress.tick(
-            absoluteTsFilePath,
-            `Compiling TS files:`,
-            `${idx + 1}/${tsSourceFiles.length}`
-        )
+    stats.generatedFilesCount += tsSourceFiles.length
 
-        const tsFileTranspiledContents = tsTranspiler.transpile(file.contents)
+    if (configuration.filesConfiguration.ts.enableLinter) {
+        return tsTranspiler.lintTranspileAndCopyFilesToDistributionDirectory(tsSourceFiles)
+    }
 
-        files.push({
-            name: file.name,
-            dirname: file.dirname,
-            path: file.path,
-            contents: tsFileTranspiledContents,
-        })
-
-        stats.generatedFilesCount++
-
-        const outputJsFileName = file.name.replace(/(\.ts)$/, '.js')
-        const sourceFilePath = path.join(file.dirname, outputJsFileName)
-
-        if (createdFileSet.has(sourceFilePath)) {
-            logger.warning(
-                `Detected JS/TS source files with the same name ${chalk.blueBright(
-                    sourceFilePath.replace(/\.js$/, '.*')
-                )}, but different extensions. TypeScript file compilation skipped.`
-            )
-        } else {
-            createdFileSet.add(sourceFilePath)
-
-            filesystem.createFile(
-                filesystem.joinAndResolvePath(configuration.distributionDirectoryPath, file.dirname, outputJsFileName),
-                tsFileTranspiledContents
-            )
-        }
-    })
-
-    return files
+    return tsTranspiler.transpileFilesAndCopyToDistributionDirectory(tsSourceFiles)
 }
 
 async function copySourceFilesToDistributionDirectory(...sourceFilesGroups: FileSystem.FileEntry[][]): Promise<number> {
@@ -177,16 +148,12 @@ async function copySourceFilesToDistributionDirectory(...sourceFilesGroups: File
 
     sourceFilesGroups.forEach((group) => {
         group.forEach((file) => {
-            const srcFilePath = filesystem.joinAndResolvePath(
-                configuration.sourceDirectoryPath,
-                file.dirname,
-                file.name
-            )
-            const fileDir = filesystem.joinAndResolvePath(configuration.distributionDirectoryPath, file.dirname)
+            const srcFilePath = filesystem.joinAndResolvePath(configuration.sourceDirectoryPath, file.dir, file.base)
+            const fileDir = filesystem.joinAndResolvePath(configuration.distributionDirectoryPath, file.dir)
             const distFilePath = filesystem.joinAndResolvePath(
                 configuration.distributionDirectoryPath,
-                file.dirname,
-                file.name
+                file.dir,
+                file.base
             )
             copyPromises.push(
                 filesystem.createDirectoryAsync(fileDir).then(() => {
@@ -218,8 +185,8 @@ function compileSourceFilesAndCopyToDistributionDirectory(
     allTemplateSourceFiles.forEach((file, idx) => {
         const absoluteTemplatePath = filesystem.joinAndResolvePath(
             configuration.sourceDirectoryPath,
-            file.dirname,
-            file.name
+            file.dir,
+            file.base
         )
         const templateContents = filesystem.getFileContents(absoluteTemplatePath)
 
@@ -265,9 +232,9 @@ function compileSourceFilesAndCopyToDistributionDirectory(
             process.exit(1)
         }
 
-        const outputHTMLFileName = file.name.endsWith('.html') ? file.name : file.name.replace(/(\.hbs)$/, '.html')
+        const outputHTMLFileName = file.base.endsWith('.html') ? file.base : file.base.replace(/(\.hbs)$/, '.html')
 
-        const sourceFilePath = path.join(file.dirname, outputHTMLFileName)
+        const sourceFilePath = path.join(file.dir, outputHTMLFileName)
 
         if (createdFileSet.has(sourceFilePath)) {
             logger.warning(
@@ -279,11 +246,7 @@ function compileSourceFilesAndCopyToDistributionDirectory(
             createdFileSet.add(sourceFilePath)
 
             filesystem.createFile(
-                filesystem.joinAndResolvePath(
-                    configuration.distributionDirectoryPath,
-                    file.dirname,
-                    outputHTMLFileName
-                ),
+                filesystem.joinAndResolvePath(configuration.distributionDirectoryPath, file.dir, outputHTMLFileName),
                 resultHTML
             )
         }
@@ -297,12 +260,8 @@ function compileSassAndCopyToDistributionDirectory(
     const sassStylesCompilationProgress = new ProgressBar(sassSourceFiles.length)
 
     const compiledSassSourceFiles: FileSystem.FileEntry[] = sassSourceFiles.map((file, idx) => {
-        const absoluteFileDirectoryName = filesystem.joinAndResolvePath(configuration.sourceDirectoryPath, file.dirname)
-        const absoluteFilePath = filesystem.joinAndResolvePath(
-            configuration.sourceDirectoryPath,
-            file.dirname,
-            file.name
-        )
+        const absoluteFileDirectoryName = filesystem.joinAndResolvePath(configuration.sourceDirectoryPath, file.dir)
+        const absoluteFilePath = filesystem.joinAndResolvePath(configuration.sourceDirectoryPath, file.dir, file.base)
         const fileContents = filesystem.getFileContents(absoluteFilePath)
 
         sassStylesCompilationProgress.tick(
@@ -315,8 +274,11 @@ function compileSassAndCopyToDistributionDirectory(
 
         try {
             compiledSassSourceFile = {
-                name: file.name.replace(/(\.scss|\.sass)$/, '.css'),
-                dirname: file.dirname,
+                scanPath: file.scanPath,
+                name: file.name,
+                ext: '.css',
+                base: file.base.replace(/(\.scss|\.sass)$/, '.css'),
+                dir: file.dir,
                 path: file.path,
                 contents: fileContents ? sassCompiler.compile(fileContents, absoluteFileDirectoryName) : '',
             }
@@ -333,8 +295,8 @@ function compileSassAndCopyToDistributionDirectory(
         filesystem.createFile(
             filesystem.joinAndResolvePath(
                 configuration.distributionDirectoryPath,
-                compiledSassSourceFile.dirname,
-                compiledSassSourceFile.name
+                compiledSassSourceFile.dir,
+                compiledSassSourceFile.base
             ),
             compiledSassSourceFile.contents
         )
@@ -376,35 +338,35 @@ function scanSourceFiles() {
         .filter((file) => shouldProcessFile(file, filesConfiguration.all))
 
     const htmlSourceFiles = allSourceFiles.filter((file) => {
-        return filesystem.hasFileExtension(file.name, ['html']) && shouldProcessFile(file, filesConfiguration.templates)
+        return filesystem.hasFileExtension(file.base, ['html']) && shouldProcessFile(file, filesConfiguration.templates)
     })
 
     const hbsSourceFiles = allSourceFiles.filter((file) => {
-        return filesystem.hasFileExtension(file.name, ['hbs']) && shouldProcessFile(file, filesConfiguration.templates)
+        return filesystem.hasFileExtension(file.base, ['hbs']) && shouldProcessFile(file, filesConfiguration.templates)
     })
 
     const scssSourceFiles = allSourceFiles.filter((file) => {
         return (
-            filesystem.hasFileExtension(file.name, ['scss', 'sass']) &&
-            !file.name.startsWith('_') &&
+            filesystem.hasFileExtension(file.base, ['scss', 'sass']) &&
+            !file.base.startsWith('_') &&
             shouldProcessFile(file, filesConfiguration.styles)
         )
     })
 
     const cssSourceFiles = allSourceFiles.filter((file) => {
-        return filesystem.hasFileExtension(file.name, ['css']) && shouldProcessFile(file, filesConfiguration.styles)
+        return filesystem.hasFileExtension(file.base, ['css']) && shouldProcessFile(file, filesConfiguration.styles)
     })
 
     const jsSourceFiles = allSourceFiles.filter((file) => {
-        return filesystem.hasFileExtension(file.name, ['js']) && shouldProcessFile(file, filesConfiguration.js)
+        return filesystem.hasFileExtension(file.base, ['js']) && shouldProcessFile(file, filesConfiguration.js)
     })
 
     const tsSourceFiles = allSourceFiles.filter((file) => {
-        return filesystem.hasFileExtension(file.name, ['ts']) && shouldProcessFile(file, filesConfiguration.js)
+        return filesystem.hasFileExtension(file.base, ['ts']) && shouldProcessFile(file, filesConfiguration.js)
     })
 
     const otherSourceFiles = allSourceFiles.filter((file) => {
-        return !filesystem.hasFileExtension(file.name, ['html', 'hbs', 'scss', 'sass', 'css', 'js', 'ts'])
+        return !filesystem.hasFileExtension(file.base, ['html', 'hbs', 'scss', 'sass', 'css', 'js', 'ts'])
     })
 
     return {

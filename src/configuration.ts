@@ -113,7 +113,11 @@ class Configuration {
         ts: {
             include: ['**/*'],
             exclude: [],
-            compilerOptions: {},
+            enableLinter: false,
+            configuration: {
+                noEmitOnError: true,
+                target: "ES2015"
+            },
         },
     }
 

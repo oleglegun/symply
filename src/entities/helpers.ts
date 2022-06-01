@@ -16,22 +16,22 @@ export function load(): Symply.Helpers {
 
     // change each nested helpers' file name to include its enclosing folder
     helpersFileList.forEach((fileWithHelpers) => {
-        if (fileWithHelpers.dirname !== helpersPath) {
-            let enclosingDirName = fileWithHelpers.dirname.replace(helpersPath + path.sep, '')
+        if (fileWithHelpers.dir !== helpersPath) {
+            let enclosingDirName = fileWithHelpers.dir.replace(helpersPath + path.sep, '')
 
             if (path.sep === '\\') {
                 // Use platform-independent nested helpers file name
                 enclosingDirName = enclosingDirName.replace(/\\/g, '/')
             }
 
-            fileWithHelpers.name = `${enclosingDirName}/${fileWithHelpers.name}`
-            fileWithHelpers.dirname = helpersPath
+            fileWithHelpers.base = `${enclosingDirName}/${fileWithHelpers.base}`
+            fileWithHelpers.dir = helpersPath
         }
         return fileWithHelpers
     })
 
     const result = helpersFileList.reduce<Symply.Helpers>((acc, helpersFile) => {
-        const helpersFileNameWithoutExtension = getHelpersFileNameWithoutExtension(helpersFile.name)
+        const helpersFileNameWithoutExtension = getHelpersFileNameWithoutExtension(helpersFile.base)
 
         if (helpersFileNameWithoutExtension === null) {
             logger.error(`Helpers file ${chalk.blueBright(helpersFile.path)} is not supported.`)

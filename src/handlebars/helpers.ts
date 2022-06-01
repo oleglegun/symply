@@ -17,7 +17,7 @@ export function embeddedStyles(compiledSassSourceFiles: FileSystem.FileEntry[]) 
 
     function embeddedStylesHelper(cssFilePath: string, data: Handlebars.HelperOptions) {
         const cssStyles = compiledSassSourceFiles.find((file) => {
-            return path.join(file.dirname, file.name) === cssFilePath
+            return path.join(file.dir, file.base) === cssFilePath
         })
 
         if (!cssStyles) {
@@ -45,7 +45,7 @@ export function embeddedScript(scriptSourceFiles: FileSystem.FileEntry[]) {
 
     function embeddedScriptHelper(scriptFilePath: string, data: Handlebars.HelperOptions) {
         const scriptFile = scriptSourceFiles.find((file) => {
-            return path.join(file.dirname, file.name) === scriptFilePath
+            return path.join(file.dir, file.base) === scriptFilePath
         })
 
         if (!scriptFile) {
