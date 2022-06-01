@@ -5,8 +5,6 @@ import configuration from '../configuration'
 import * as filesystem from '../filesystem'
 import logger from '../logger'
 
-const HELPERS_EXTENSION = '.js'
-
 export function load(): Symply.Helpers {
     /*-----------------------------------------------------------------------------
      *  Import namespaced helpers from `helpersDirectoryPath`
@@ -14,40 +12,42 @@ export function load(): Symply.Helpers {
     const helpersPath = configuration.helpersDirectoryPath
     const helpersFileList = filesystem.scanFiles(helpersPath, true, false, true)
 
-    // change each nested helpers' file name to include its enclosing folder
-    helpersFileList.forEach((fileWithHelpers) => {
-        if (fileWithHelpers.dir !== helpersPath) {
-            let enclosingDirName = fileWithHelpers.dir.replace(helpersPath + path.sep, '')
+    const result = helpersFileList
+        // change each nested helpers' file name to include its enclosing folder
+        .map((fileWithHelpers) => {
+            if (fileWithHelpers.dir !== helpersPath) {
+                let enclosingDirName = fileWithHelpers.dir.replace(helpersPath + path.sep, '')
 
-            if (path.sep === '\\') {
-                // Use platform-independent nested helpers file name
-                enclosingDirName = enclosingDirName.replace(/\\/g, '/')
+                if (path.sep === '\\') {
+                    // Use platform-independent nested helpers file name
+                    enclosingDirName = enclosingDirName.replace(/\\/g, '/')
+                }
+
+                return {
+                    ...fileWithHelpers,
+                    base: `${enclosingDirName}/${fileWithHelpers.base}`,
+                    name: `${enclosingDirName}/${fileWithHelpers.name}`,
+                    dir: helpersPath,
+                }
             }
 
-            fileWithHelpers.base = `${enclosingDirName}/${fileWithHelpers.base}`
-            fileWithHelpers.dir = helpersPath
-        }
-        return fileWithHelpers
-    })
+            return fileWithHelpers
+        })
+        .reduce<Symply.Helpers>((acc, helpersFile) => {
+            if (helpersFile.name === null) {
+                logger.error(`Helpers file ${chalk.blueBright(helpersFile.path)} is not supported.`)
+                process.exit(1)
+            }
 
-    const result = helpersFileList.reduce<Symply.Helpers>((acc, helpersFile) => {
-        const helpersFileNameWithoutExtension = getHelpersFileNameWithoutExtension(helpersFile.base)
+            const helpersObj = eval(helpersFile.contents)
 
-        if (helpersFileNameWithoutExtension === null) {
-            logger.error(`Helpers file ${chalk.blueBright(helpersFile.path)} is not supported.`)
-            process.exit(1)
-        }
-        const helpersCode = helpersFile.contents
+            for (const helperName of Object.keys(helpersObj)) {
+                const helperHashKey = `${helpersFile.name}.${helperName}`
+                acc[helperHashKey] = helpersObj[helperName]
+            }
 
-        const helpersObj = eval(helpersCode)
-
-        for (const helperName of Object.keys(helpersObj)) {
-            const helperHashKey = `${helpersFileNameWithoutExtension}.${helperName}`
-            acc[helperHashKey] = helpersObj[helperName]
-        }
-
-        return acc
-    }, {})
+            return acc
+        }, {})
 
     /*-----------------------------------------------------------------------------
      *  [Module mode] Add extra helpers if there are any available
@@ -62,12 +62,4 @@ export function load(): Symply.Helpers {
     }
 
     return result
-}
-
-function getHelpersFileNameWithoutExtension(fileName: string) {
-    if (fileName.endsWith(HELPERS_EXTENSION)) {
-        return fileName.replace(new RegExp(`\\${HELPERS_EXTENSION}$`), '')
-    }
-
-    return null
 }

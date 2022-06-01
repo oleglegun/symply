@@ -232,21 +232,19 @@ function compileSourceFilesAndCopyToDistributionDirectory(
             process.exit(1)
         }
 
-        const outputHTMLFileName = file.base.endsWith('.html') ? file.base : file.base.replace(/(\.hbs)$/, '.html')
-
-        const sourceFilePath = path.join(file.dir, outputHTMLFileName)
+        const sourceFilePath = path.join(file.dir, file.name + '.html')
 
         if (createdFileSet.has(sourceFilePath)) {
             logger.warning(
                 `Detected HTML/HBS source files with the same name ${chalk.blueBright(
-                    sourceFilePath.replace(/\.html$/, '.*')
+                    path.join(file.dir, file.name + '.*')
                 )}, but different extensions. File creation skipped.`
             )
         } else {
             createdFileSet.add(sourceFilePath)
 
             filesystem.createFile(
-                filesystem.joinAndResolvePath(configuration.distributionDirectoryPath, file.dir, outputHTMLFileName),
+                filesystem.joinAndResolvePath(configuration.distributionDirectoryPath, file.dir, file.name + '.html'),
                 resultHTML
             )
         }
@@ -277,7 +275,7 @@ function compileSassAndCopyToDistributionDirectory(
                 scanPath: file.scanPath,
                 name: file.name,
                 ext: '.css',
-                base: file.base.replace(/(\.scss|\.sass)$/, '.css'),
+                base: file.name + '.css',
                 dir: file.dir,
                 path: file.path,
                 contents: fileContents ? sassCompiler.compile(fileContents, absoluteFileDirectoryName) : '',

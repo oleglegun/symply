@@ -7,7 +7,13 @@ import configuration from '../configuration'
 import * as filesystem from '../filesystem'
 import logger from '../logger'
 
-const SUPPORTED_PARTIAL_EXTENTION_LIST = ['.html', '.hbs', '.svg', '.md', '.txt']
+enum PARTIAL_EXTENSION {
+    HTML = '.html',
+    HANDLEBARS = '.hbs',
+    SVG = '.svg',
+    MARKDOWN = '.md',
+    TXT = '.txt',
+}
 
 const resolvedPartialsSet = new Set()
 
@@ -18,45 +24,66 @@ export function load(): Symply.Partials {
     const partialsPath = configuration.partialsDirectoryPath
     const partials = filesystem.scanFiles(partialsPath, true, false, true)
 
-    // change nestes partials names to include its enclosing folder
-    partials.forEach((partial) => {
-        if (partial.dir !== partialsPath) {
-            let enclosingDirName = partial.dir.replace(partialsPath + path.sep, '')
+    const result = partials
+        // change nestes partials names to include its enclosing folder
+        .map((partial) => {
+            if (partial.dir !== partialsPath) {
+                let enclosingDirName = partial.dir.replace(partialsPath + path.sep, '')
 
-            if (path.sep === '\\') {
-                // Use platform-independent nested partial file name
-                enclosingDirName = enclosingDirName.replace(/\\/g, '/')
+                if (path.sep === '\\') {
+                    // Use platform-independent nested partial file name
+                    enclosingDirName = enclosingDirName.replace(/\\/g, '/')
+                }
+
+                return {
+                    ...partial,
+                    base: `${enclosingDirName}/${partial.base}`,
+                    name: `${enclosingDirName}/${partial.name}`,
+                    dir: partialsPath,
+                }
             }
 
-            partial.base = `${enclosingDirName}/${partial.base}`
-            partial.dir = partialsPath
-        }
+            return partial
+        })
+        .reduce<Symply.Partials>((acc, partial) => {
+            let parsedContents
 
-        return partial
-    })
+            switch (partial.ext) {
+                case PARTIAL_EXTENSION.HTML:
+                    parsedContents = partial.contents
+                    break
+                case PARTIAL_EXTENSION.HANDLEBARS:
+                    parsedContents = partial.contents
+                    break
+                case PARTIAL_EXTENSION.SVG:
+                    parsedContents = partial.contents
+                    break
+                case PARTIAL_EXTENSION.MARKDOWN:
+                    //TODO add markdown parser
+                    parsedContents = partial.contents
+                    break
+                case PARTIAL_EXTENSION.TXT:
+                    parsedContents = partial.contents
+                    break
+                default:
+                    logger.error(`Partial file ${chalk.blueBright(partial.path)} is not supported.`)
+                    process.exit(1)
+            }
 
-    const result = partials.reduce<Symply.Partials>((acc, partial) => {
-        const partialNameWithoutExtension = getPartialNameWithoutExtension(partial.base)
+            if (acc[partial.name] !== undefined) {
+                const duplicatePartialPath = `${partial.dir}${path.sep}${partial.name}.*`
 
-        if (partialNameWithoutExtension === null) {
-            logger.error(`Partial file ${chalk.blueBright(partial.path)} is not supported.`)
-            process.exit(1)
-        }
+                logger.warning(
+                    `Detected partials with the same name ${chalk.blueBright(
+                        duplicatePartialPath
+                    )}, but different extensions.`
+                )
+            } else {
+                acc[partial.name] = parsedContents
+            }
 
-        if (acc[partialNameWithoutExtension] !== undefined) {
-            const duplicatePartialPath = `${partial.dir}${path.sep}${partialNameWithoutExtension}.*`
-
-            logger.warning(
-                `Detected partials with the same name ${chalk.blueBright(
-                    duplicatePartialPath
-                )}, but different extensions.`
-            )
-        } else {
-            acc[partialNameWithoutExtension] = partial.contents
-        }
-
-        return acc
-    }, {})
+            return acc
+        }, {})
 
     /*-----------------------------------------------------------------------------
      *  [Module mode] Add extra partials if there are any available
@@ -76,15 +103,6 @@ export function load(): Symply.Partials {
     }
 
     return result
-}
-
-function getPartialNameWithoutExtension(fileName: string) {
-    if (SUPPORTED_PARTIAL_EXTENTION_LIST.some((supportedExtension) => fileName.endsWith(supportedExtension))) {
-        const re = `(${SUPPORTED_PARTIAL_EXTENTION_LIST.map((ext) => '\\' + ext).join('|')})$`
-        return fileName.replace(new RegExp(re), '')
-    }
-
-    return null
 }
 
 export function initUnusedPartialsDetector() {
