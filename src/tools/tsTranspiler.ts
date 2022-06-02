@@ -85,7 +85,7 @@ export function transpileFilesAndCopyToDistributionDirectory(
         })
 
         filesystem.createFile(
-            filesystem.joinAndResolvePath(configuration.distributionDirectoryPath, file.dir, file.name, '.ts'),
+            filesystem.joinAndResolvePath(configuration.distributionDirectoryPath, file.dir, file.name + '.js'),
             tsFileTranspiledContents
         )
     })
