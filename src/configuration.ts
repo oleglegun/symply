@@ -116,6 +116,7 @@ class Configuration {
             enableLinter: false,
             configuration: {
                 noEmitOnError: true,
+                removeComments: true,
                 target: "ES2015"
             },
         },

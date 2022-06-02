@@ -99,6 +99,7 @@ function parseTsConfiguration(): ts.CompilerOptions {
     return {
         module: ts.ModuleKind.CommonJS,
         noEmitOnError: config.noEmitOnError,
+        removeComments: config.removeComments,
         target: ts.ScriptTarget[config.target],
     }
 }

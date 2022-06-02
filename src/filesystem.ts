@@ -21,7 +21,8 @@ export function scanFiles(
     /**
      * Ignore files like: `.DS_Store`, `Thumbs.db` and etc.
      * https://github.com/sindresorhus/junk/blob/main/index.js
-     * @default true */
+     * 
+     * Default value: `true` */
     ignoreJunkFiles = true
 ): FileSystem.FileEntry[] {
     if (removeScanPath) {

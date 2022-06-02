@@ -44,37 +44,44 @@ namespace Symply {
     export interface SystemConfiguration {
         /**
          * Log debug information to the console.
-         * @default false
+         *
+         * Default value: `false`
          **/
         debugOutput: boolean
         /**
          * Force compile templates even if some properties/helpers are missing.
-         * @default false
+         *
+         * Default value: `false`
          **/
         ignoreMissingProperties: boolean
         /**
          * Format output html files using Prettier (significantly slows down the generation process).
-         * @default false
+         *
+         * Default value: `false`
          */
         formatOutputHTML: boolean
         /**
          * Minify output html files.
-         * @default false
+         *
+         * Default value: `false`
          */
         minifyOutputHTML: boolean
         /**
          * Omit all warning log messages.
-         * @default false
+         *
+         * Default value: `false`
          */
         omitWarnings: boolean
         /**
          * Use ANSI escape sequences to add colors to logs.
-         * @default true
+         *
+         * Default value: `true`
          */
         ansiLogging: boolean
         /**
          * Clear all files in distribution directory before each compilation. Use with caution - your files can be deleted if `distributionDirectoryPath` is set incorrectly.
-         * @default false
+         *
+         * Default value: `false`
          */
         clearDistributionDirectoryOnRecompile: boolean
     }
@@ -87,33 +94,39 @@ namespace Symply {
     export interface PathsConfiguration {
         /**
          * Set a path to prefix all __default__ SYMPLY directories (relative to your NPM project's root dir).
-         * @default ''
+         *
+         * Default value: `''`
          * @example 'symply' -> 'symply/dist', 'symply/src', 'symply/helpers', 'symply/globals', 'symply/partials'
          **/
         defaultDirectoriesPrefix: string
         /**
          * Override default __source__ directory path. `defaultDirectoriesPrefix` will NOT be applied.
-         * @default 'src'
+         *
+         * Default value: `'src'`
          **/
         sourceDirectoryPath: string
         /**
          * Override default __distribution__ directory path. `defaultDirectoriesPrefix` will NOT be applied.
-         * @default 'dist'
+         *
+         * Default value: `'dist'`
          **/
         distributionDirectoryPath: string
         /**
          * Override default __globals__ directory path. `defaultDirectoriesPrefix` will NOT be applied.
-         * @default 'globals'
+         *
+         * Default value: `'globals'`
          **/
         globalsDirectoryPath: string
         /**
          * Override default __partials__ directory path. `defaultDirectoriesPrefix` will NOT be applied.
-         * @default 'partials'
+         *
+         * Default value: `'partials'`
          **/
         partialsDirectoryPath: string
         /**
          * Override default __helpers__ directory path. `defaultDirectoriesPrefix` will NOT be applied.
-         * @default 'helpers'
+         *
+         * Default value: `'helpers'`
          **/
         helpersDirectoryPath: string
     }
@@ -124,14 +137,16 @@ namespace Symply {
             /**
              * Define global patterns for all files in the `sourceDirectoryPath` that must be included in the compilation process.
              * Use forward slash `/` as a path separator on any platform.
-             * @default ['**\/*'] - Process all files, except dotfiles
+             *
+             * Default value: `['**\/*']` - Process all files, except dotfiles
              * @example ['*.html', '*.css'] - Process only files that match these patterns
              */
             include: string[]
             /**
              * Define global patterns for all files in the `sourceDirectoryPath` that must be excluded from the compilation process.
              * Use forward slash `/` as a path separator on any platform.
-             * @default []
+             *
+             * Default value: `[]`
              * @example ['test.hbs', 'temp/*'] - Exclude files that match these patterns
              */
             exclude: string[]
@@ -141,14 +156,16 @@ namespace Symply {
             /**
              * Define patterns for `.hbs` and `.html` template files in the `sourceDirectoryPath` that must be included in the compilation process.
              * Use forward slash `/` as a path separator on any platform.
-             * @default  ['**\/*'] - Process all `.hbs` and `.html` files
+             *
+             * Default value: `['**\/*']` - Process all `.hbs` and `.html` files
              * @example ['index.hbs', 'articles/*.html'] - Process only files that match these patterns
              */
             include: string[]
             /**
              * Define patterns for `.hbs` and `.html` template files in the `sourceDirectoryPath` that must be excluded from the compilation process.
              * Use forward slash `/` as a path separator on any platform.
-             * @default []
+             *
+             * Default value: `[]`
              * @example ['index.hbs', 'articles/*.html'] - Exclude files that match these patterns
              */
             exclude: string[]
@@ -158,14 +175,16 @@ namespace Symply {
             /**
              * Define patterns for `.css`, `.scss` and `.sass` style files in the `sourceDirectoryPath` that must be included in the compilation process.
              * Use forward slash `/` as a path separator on any platform.
-             * @default  ['**\/*'] - Process all `.css`, `.scss` and `.sass` style files
+             *
+             * Default value: `['**\/*']` - Process all `.css`, `.scss` and `.sass` style files
              * @example ['styles.css', 'styles/*.scss'] - Process only files that match these patterns
              */
             include: string[]
             /**
              * Define patterns for `.css`, `.scss` and `.sass` style files in the `sourceDirectoryPath` that must be excluded from the compilation process.
              * Use forward slash `/` as a path separator on any platform.
-             * @default []
+             *
+             * Default value: `[]`
              * @example ['styles.test.css', 'styles/test.scss'] - Exclude files that match these patterns
              */
             exclude: string[]
@@ -175,14 +194,16 @@ namespace Symply {
             /**
              * Define patterns for `.js` script files in the `sourceDirectoryPath` that must be included in the compilation process.
              * Use forward slash `/` as a path separator on any platform.
-             * @default  ['**\/*'] - Process all `.js` script files
+             *
+             * Default value: `['**\/*']` - Process all `.js` script files
              * @example ['main.js', 'js/*.js'] - Process only files that match these patterns
              */
             include: string[]
             /**
              * Define patterns for `.js` script files in the `sourceDirectoryPath` that must be excluded from the compilation process.
              * Use forward slash `/` as a path separator on any platform.
-             * @default []
+             *
+             * Default value: `[]`
              * @example ['analytics.js', 'js/*.test.js'] - Exclude files that match these patterns
              */
             exclude: string[]
@@ -192,20 +213,23 @@ namespace Symply {
             /**
              * Define patterns for `.ts` script files in the `sourceDirectoryPath` that must be included in the compilation process.
              * Use forward slash `/` as a path separator on any platform.
-             * @default  ['**\/*'] - Process all `.ts` script files
+             *
+             * Default value: `['**\/*']` - Process all `.ts` script files
              * @example ['main.ts', 'ts/*.ts'] - Process only files that match these patterns
              */
             include: string[]
             /**
              * Define patterns for `.ts` script files in the `sourceDirectoryPath` that must be excluded from the compilation process.
              * Use forward slash `/` as a path separator on any platform.
-             * @default []
+             *
+             * Default value: `[]`
              * @example ['analytics.ts', 'ts/*.test.ts'] - Exclude files that match these patterns
              */
             exclude: string[]
             /**
              * Check TypeScript code for errors. Significantly slows down the transpile process.
-             * @default false
+             *
+             * Default value: `false`
              */
             enableLinter: boolean
             /**
@@ -215,11 +239,18 @@ namespace Symply {
             configuration: {
                 /**
                  * Do not emit any JS files on lint error. Setting is considered only when linter is enabled.
-                 * @default true
+                 *
+                 * Default value: `true`
                  */
                 noEmitOnError: boolean
                 /**
-                 * @default 'ES2015'
+                 * Strips all comments from TypeScript files when converting into JavaScript.
+                 *
+                 * Default value: `true`
+                 */
+                removeComments: boolean
+                /**
+                 * Default value: `'ES2015'`
                  */
                 target:
                     | 'ES3'
@@ -275,8 +306,9 @@ namespace Symply {
     interface ActionBase {
         /**
          * Skip execution of current action
-         *  @default false
-         * */
+         *
+         * Default value: `false`
+         */
         skip?: boolean
         /**
          * Optional action description
@@ -301,7 +333,7 @@ namespace Symply {
         type: 'COPY_FILES_TO_DIR'
         fromDirPath: string | string[]
         toDirPath: string | string[]
-        /** @default () => true */
+        /** Default value: `() => true` */
         filterFunc?: FileFilterFunc
     }
 
@@ -317,7 +349,7 @@ namespace Symply {
         fromDirPath: string | string[]
         /** Non-existent directories will be automatically created. */
         toDirPath: string | string[]
-        /** @default () => true */
+        /** Default value: `() => true` */
         filterFunc?: FileFilterFunc
     }
 
@@ -388,7 +420,6 @@ namespace Symply {
         type: 'CALL_FUNC'
         func: () => void | Promise<void>
     }
-
 
     export interface GenerationStats {
         generatedFilesCount: number
