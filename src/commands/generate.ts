@@ -360,7 +360,7 @@ function scanSourceFiles() {
     })
 
     const tsSourceFiles = allSourceFiles.filter((file) => {
-        return filesystem.hasFileExtension(file.base, ['ts']) && shouldProcessFile(file, filesConfiguration.js)
+        return filesystem.hasFileExtension(file.base, ['ts']) && shouldProcessFile(file, filesConfiguration.ts)
     })
 
     const otherSourceFiles = allSourceFiles.filter((file) => {
