@@ -6,12 +6,12 @@ import logger from './logger'
 
 async function generate(configuration: SymplyConfiguration) {
     const start = Date.now()
-    logger.info(chalk.magentaBright('SYMPLY::GENERATE'), chalk.greenBright('[START]'))
 
     if (Object.keys(configuration).length > 0) {
         config.mergeConfigurationAndVerify(configuration)
-        logger.info(`Configuration object verified and merged.`)
     }
+
+    logger.info(chalk.magentaBright('SYMPLY::GENERATE'), chalk.greenBright('[START]'))
 
     const configurationFromFile = config.loadConfigurationFromConfigFile()
 
@@ -21,7 +21,7 @@ async function generate(configuration: SymplyConfiguration) {
     }
 
     await generateCommand()
-    
+
     logger.info(chalk.magentaBright('SYMPLY::GENERATE'), chalk.greenBright(`[DONE in ${(Date.now() - start) / 1000}s]`))
 }
 

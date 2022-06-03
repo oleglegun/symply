@@ -84,6 +84,14 @@ namespace Symply {
          * Default value: `false`
          */
         clearDistributionDirectoryOnRecompile: boolean
+        /**
+         * Change default `console` logger to any custom one.
+         */
+        customLogger: CustomLogger
+    }
+
+    export interface CustomLogger {
+        log(message?: string): void
     }
 
     export interface ConfigurableDirectoryPath {

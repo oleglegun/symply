@@ -38,6 +38,7 @@ class Configuration {
     private _omitWarnings = false
     private _ansiLogging = true
     private _clearDistributionDirectoryOnRecompile = false
+    private _customLogger: Symply.CustomLogger | null = null
 
     public get debugOutput() {
         return this._debugOutput
@@ -59,6 +60,9 @@ class Configuration {
     }
     public get clearDistributionDirectoryOnRecompile() {
         return this._clearDistributionDirectoryOnRecompile
+    }
+    public get customLogger() {
+        return this._customLogger
     }
 
     /*-----------------------------------------------------------------------------
@@ -117,7 +121,7 @@ class Configuration {
             configuration: {
                 noEmitOnError: true,
                 removeComments: true,
-                target: "ES2015"
+                target: 'ES2015',
             },
         },
     }
@@ -174,6 +178,7 @@ class Configuration {
         this._ansiLogging = config.ansiLogging ?? this._ansiLogging
         this._clearDistributionDirectoryOnRecompile =
             config.clearDistributionDirectoryOnRecompile ?? this._clearDistributionDirectoryOnRecompile
+        this._customLogger = config.customLogger ?? this._customLogger
 
         this.defaultDirectoriesPrefix = config.paths?.defaultDirectoriesPrefix ?? this.defaultDirectoriesPrefix
 
