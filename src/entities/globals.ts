@@ -1,8 +1,8 @@
 import chalk from 'chalk'
-import flat from 'flat'
 import yaml from 'js-yaml'
 import _ from 'lodash'
 import path from 'path'
+import util from 'util'
 
 import configuration from '../configuration'
 import * as filesystem from '../filesystem'
@@ -82,7 +82,12 @@ export function load(): Symply.Globals {
 
     if (configuration.debugOutput) {
         logger.debug('Registered globals:')
-        logger.log(flat.flatten(result, { maxDepth: 1 }))
+        Object.keys(result).forEach((globalsKey) => {
+            logger.logWithPadding(
+                chalk.yellowBright(globalsKey) + ':',
+                util.inspect(result[globalsKey], { depth: 1, colors: true })
+            )
+        })
     }
 
     return result

@@ -1,6 +1,6 @@
 {
     "name": "symply",
-    "version": "0.10.4",
+    "version": "0.10.5",
     "description": "A simple static site generator.",
     "author": "Oleg Legun <oleg.legun@gmail.com>",
     "homepage": "https://github.com/oleglegun/symply#readme",
@@ -24,7 +24,6 @@
     },
     "dependencies": {
         "chalk": "4.1.2",
-        "flat": "5.0.2",
         "fs-extra": "10.0.1",
         "handlebars": "4.7.7",
         "html-minifier": "4.0.0",
