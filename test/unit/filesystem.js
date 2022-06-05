@@ -1,6 +1,6 @@
 const test = require('tape')
 const path = require('path')
-const { hasFileExtension, joinAndResolvePath } = require('../dist/filesystem')
+const { hasFileExtension, joinAndResolvePath } = require('../../dist/filesystem')
 
 test('––––––––––––––––––– filesystem.js tests ––––––––––––––––––––', function (t) {
     t.test('hasFileExtension(fileName, validExtensionsList)', function (st) {

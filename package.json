@@ -20,7 +20,7 @@
         "start": "node index.js",
         "lint": "npx eslint . --ext .js,.jsx,.ts,.tsx",
         "cloc": "cloc --exclude-dir=node_modules,dist --exclude-ext=json .",
-        "test": "npm run compile && tape test/**/*.js | tap-spec"
+        "test:unit": "npm run compile && tape test/unit/**/*.js | tap-spec"
     },
     "dependencies": {
         "chalk": "4.1.2",
