@@ -1,0 +1,20 @@
+{
+    "ansiLogging": false,
+    "debugOutput": true,
+    "clearDistributionDirectoryOnRecompile": true,
+    "paths": {
+        "defaultDirectoriesPrefix": "symply",
+        "distributionDirectoryPath": "output"
+    },
+    "entities": {
+        "globals": {
+            "numbers": {
+                "a": 2,
+                "b": 3
+            },
+            "pageTitle": {
+                "index": "Index page"
+            }
+        }
+    }
+}

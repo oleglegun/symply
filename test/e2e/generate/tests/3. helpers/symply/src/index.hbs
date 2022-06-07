@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        {{!-- Render title by passing `pageTitle` globals object and key 'index' --}}
+        <title>{{[title/page] pageTitle 'index' }}</title>
+    </head>
+    <body>
+        <div>{{[text.toUpperCase] 'text must be uppercased' }}</div>
+        <div>{{#toSnakeCase}}BLOCK MUST BE SNAKE CASED{{/toSnakeCase}}</div>
+        <div>{{toSnakeCase 'TEXT MUST BE SNAKE CASED'}}</div>
+        <div>{{numbers.a}} + {{numbers.b}} = {{[math/operations.sum] numbers.a numbers.b }}</div>
+        <div>{{numbers.a}} - {{numbers.b}} = {{[math/operations.-] numbers.a numbers.b }}</div>
+    </body>
+</html>

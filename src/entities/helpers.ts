@@ -39,11 +39,15 @@ export function load(): Symply.Helpers {
                 process.exit(1)
             }
 
-            const helpersObj = eval(helpersFile.contents)
+            const helpersMapOrFunction = eval(helpersFile.contents)
 
-            for (const helperName of Object.keys(helpersObj)) {
-                const helperHashKey = `${helpersFile.name}.${helperName}`
-                acc[helperHashKey] = helpersObj[helperName]
+            if (typeof helpersMapOrFunction === 'function') {
+                acc[helpersFile.name] = helpersMapOrFunction
+            } else {
+                for (const helperName of Object.keys(helpersMapOrFunction)) {
+                    const helperHashKey = `${helpersFile.name}.${helperName}`
+                    acc[helperHashKey] = helpersMapOrFunction[helperName]
+                }
             }
 
             return acc
