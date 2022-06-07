@@ -1,6 +1,6 @@
 {
     "name": "symply",
-    "version": "0.10.5",
+    "version": "0.10.6",
     "description": "A simple static site generator.",
     "author": "Oleg Legun <oleg.legun@gmail.com>",
     "homepage": "https://github.com/oleglegun/symply#readme",
@@ -15,12 +15,14 @@
     "license": "MIT",
     "scripts": {
         "compile": "npm run dist:clear && npx tsc",
-        "publish-and-push": "npm run compile && npm publish && git tag \"v$npm_package_version\" && git push && git push --tags",
+        "publish-and-push": "npm run compile && npm test && npm publish && git tag \"v$npm_package_version\" && git push && git push --tags",
         "dist:clear": "rm -rf dist",
         "start": "node index.js",
         "lint": "npx eslint . --ext .js,.jsx,.ts,.tsx",
         "cloc": "cloc --exclude-dir=node_modules,dist --exclude-ext=json .",
-        "test:unit": "npm run compile && tape test/unit/**/*.js | tap-spec"
+        "test": "npm run test:unit && npm run test:e2e",
+        "test:unit": "tape test/unit/**/*.js | tap-spec",
+        "test:e2e": "tape test/e2e/**/*.test.js | tap-spec"
     },
     "dependencies": {
         "chalk": "4.1.2",
@@ -51,6 +53,7 @@
         "@types/sass": "1.43.1",
         "@typescript-eslint/eslint-plugin": "5.14.0",
         "@typescript-eslint/parser": "5.14.0",
+        "dir-compare": "4.0.0",
         "eslint": "8.11.0",
         "eslint-config-google": "0.14.0",
         "eslint-config-prettier": "8.5.0",

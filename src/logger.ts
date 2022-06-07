@@ -13,8 +13,14 @@ const LOG_LEVEL_PADDING = ''.padEnd(LOG_LEVEL_CHAR_LENGTH)
 
 export default {
     log(...strings: string[]): void {
-        const logger = configuration.customLogger ?? console
-        ProgressBar.isRunning && logger.log()
+        let logger
+
+        if (configuration.customLogger) {
+            logger = configuration.customLogger
+        } else {
+            logger = console
+            ProgressBar.isRunning && logger.log()
+        }
 
         if (configuration.ansiLogging) {
             logger.log(strings.join(' '))

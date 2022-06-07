@@ -1,0 +1,20 @@
+{
+    "ansiLogging": false,
+    "debugOutput": true,
+    "clearDistributionDirectoryOnRecompile": true,
+    "paths": {
+        "defaultDirectoriesPrefix": "symply",
+        "distributionDirectoryPath": "output"
+    },
+    "entities": {
+        "globals": {
+            "pageTitle": {
+                "index": "Page Title"
+            }
+        },
+        "partials": {
+            "pageHeader": "<div>Page Header</div>",
+            "pageFooter": "<div>Page Footer</div>"
+        }
+    }
+}

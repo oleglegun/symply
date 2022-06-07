@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+{{!-- Globals value from /globals directory --}}
+<html lang="{{lang.page.index}}">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        {{!-- Globals value from symply-config.jsonc --}}
+        <title>{{pageTitle.index}}</title>
+    </head>
+    <body>
+        {{> pageHeader }}{{> pages/index/body }}{{> pageFooter }}
+    </body>
+</html>

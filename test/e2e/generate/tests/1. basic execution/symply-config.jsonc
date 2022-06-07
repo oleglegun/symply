@@ -1,0 +1,9 @@
+{
+    "ansiLogging": false,
+    "debugOutput": true,
+    "clearDistributionDirectoryOnRecompile": true,
+    "paths": {
+        "defaultDirectoriesPrefix": "symply",
+        "distributionDirectoryPath": "output"
+    }
+}
