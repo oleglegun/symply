@@ -13,6 +13,7 @@ enum PARTIAL_EXTENSION {
     SVG = '.svg',
     MARKDOWN = '.md',
     TXT = '.txt',
+    JS = '.js',
 }
 
 const resolvedPartialsSet = new Set()
@@ -50,19 +51,14 @@ export function load(): Symply.Partials {
 
             switch (partial.ext) {
                 case PARTIAL_EXTENSION.HTML:
-                    parsedContents = partial.contents
-                    break
                 case PARTIAL_EXTENSION.HANDLEBARS:
-                    parsedContents = partial.contents
-                    break
                 case PARTIAL_EXTENSION.SVG:
+                case PARTIAL_EXTENSION.JS:
+                case PARTIAL_EXTENSION.TXT:
                     parsedContents = partial.contents
                     break
                 case PARTIAL_EXTENSION.MARKDOWN:
                     //TODO add markdown parser
-                    parsedContents = partial.contents
-                    break
-                case PARTIAL_EXTENSION.TXT:
                     parsedContents = partial.contents
                     break
                 default:

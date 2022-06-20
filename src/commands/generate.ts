@@ -97,7 +97,10 @@ export async function generate(): Promise<Symply.GenerationStats> {
 
     stats.copiedFilesCount += copiedFilesCount
 
-    logger.info(`Copied ${stats.copiedFilesCount} files to the distribution directory.`)
+    logger.info(
+        `Generated ${chalk.greenBright(stats.generatedFilesCount)} file${stats.generatedFilesCount === 1 ? '' : 's'},` +
+            ` copied ${chalk.greenBright(stats.copiedFilesCount)} file${stats.copiedFilesCount === 1 ? '' : 's'}.`
+    )
 
     /*-----------------------------------------------------------------------------
      *  Actions
@@ -202,7 +205,9 @@ function compileSourceFilesAndCopyToDistributionDirectory(
 
             if (configuration.minifyOutputHTML) {
                 resultHTML = htmlMinifier.minify(resultHTML)
-            } else if (configuration.formatOutputHTML) {
+            }
+
+            if (configuration.formatOutputHTML) {
                 resultHTML = htmlFormatter.format(resultHTML)
             }
 

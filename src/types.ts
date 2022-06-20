@@ -313,13 +313,13 @@ namespace Symply {
 
     interface ActionBase {
         /**
-         * Skip execution of current action
+         * Skip execution of current action.
          *
          * Default value: `false`
          */
         skip?: boolean
         /**
-         * Optional action description
+         * Optional action description.
          */
         info?: string | string[]
     }
@@ -364,14 +364,14 @@ namespace Symply {
     export interface CopyDirectoryAction {
         type: 'COPY_DIR'
         fromDirPath: string | string[]
-        /** Must have the same final directory name as `fromDirPath` */
+        /** Must have the same final directory name as `fromDirPath`. */
         toDirPath: string | string[]
     }
 
     export interface MoveDirectoryAction {
         type: 'MOVE_DIR'
         fromDirPath: string | string[]
-        /** Must have the same final directory name as `fromDirPath` */
+        /** Must have the same final directory name as `fromDirPath`. */
         toDirPath: string | string[]
     }
 

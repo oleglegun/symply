@@ -21,7 +21,7 @@ export function scanFiles(
     /**
      * Ignore files like: `.DS_Store`, `Thumbs.db` and etc.
      * https://github.com/sindresorhus/junk/blob/main/index.js
-     * 
+     *
      * Default value: `true` */
     ignoreJunkFiles = true
 ): FileSystem.FileEntry[] {
@@ -190,23 +190,6 @@ export function getFileContents(filePath: string): string {
     return fs.readFileSync(filePath, { encoding: 'utf8' })
 }
 
-export function createDirectoryIfNotExists(directoryPath: string): boolean {
-    if (fs.existsSync(directoryPath)) {
-        return false
-    }
-
-    fs.mkdirSync(directoryPath)
-    return true
-}
-
-export function createFileIfNotExists(filePath: string, contents?: string) {
-    if (fs.existsSync(filePath)) {
-        return false
-    }
-
-    fs.ensureFileSync(filePath)
-}
-
 export function createFile(filePath: string, contents?: string) {
     fs.ensureFileSync(filePath)
     fs.writeFileSync(filePath, contents || '', { encoding: 'utf8' })
@@ -224,4 +207,41 @@ export function joinAndResolvePath(...pathParts: string[]): string {
     } else {
         return path.join(process.cwd(), joinedPath)
     }
+}
+
+export function getNPMFileContents(
+    /** @example "bootstrap@5.0.2-beta1/dist/js/bootstrap.bundle.min.js" */
+    npmPackageAndFilePath: string
+) {
+    const parts = npmPackageAndFilePath.split('/')
+    const [packageName, packageVersion] = parts[0].split('@')
+
+    if (!packageName) {
+        throw new Error(`NPM package name is not provided.`)
+    }
+
+    if (packageVersion !== undefined) {
+        const packageJSON: { version?: string } = JSON.parse(
+            getFileContents(joinAndResolvePath('.', 'node_modules', packageName, 'package.json'))
+        )
+
+        if (packageJSON.version !== packageVersion) {
+            throw new Error(
+                `NPM package version is incompatible. Expected: "${packageName}@${packageVersion}". Actual: "${packageName}@${packageJSON.version}".`
+            )
+        }
+    }
+
+    const pkgScriptPath = parts.slice(1).join('/')
+    const absoluteScriptPath = joinAndResolvePath('.', 'node_modules', packageName, pkgScriptPath)
+
+    let fileContents
+
+    try {
+        fileContents = getFileContents(absoluteScriptPath)
+    } catch (err) {
+        throw new Error(`NPM package file "${absoluteScriptPath}" is not found.`)
+    }
+
+    return fileContents
 }

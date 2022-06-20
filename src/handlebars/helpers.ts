@@ -8,14 +8,37 @@ import * as filesystem from '../filesystem'
 import logger from '../logger'
 import ProgressBar from '../progressBar'
 
+const NPMFileCache: { [npmFilePath: string]: string } = {}
+
 /** Embedded styles injector helper.
  * @example
  * {{embeddedStyles 'css/styles.css' attributes='media="(min-width: 500px) and (max-width: 1000px)"' }}
+ * {{embeddedStyles 'npm:bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css' attributes='media="(min-width: 500px) and (max-width: 1000px)"' }}
  */
 export function embeddedStyles(compiledSassSourceFiles: FileSystem.FileEntry[]) {
-    Handlebars.registerHelper('embeddedStyles', embeddedStylesHelper)
+    const HELPER_NAME = 'embeddedStyles'
+    Handlebars.registerHelper(HELPER_NAME, embeddedStylesHelper)
 
     function embeddedStylesHelper(cssFilePath: string, data: Handlebars.HelperOptions) {
+        const { attributes } = data.hash as { attributes?: string }
+
+        /*-----------------------------------------------------------------------------
+         *  CSS file from `node_modules`
+         *----------------------------------------------------------------------------*/
+        if (cssFilePath.startsWith('npm:')) {
+            let cssCode = NPMFileCache[cssFilePath]
+
+            if (cssCode === undefined) {
+                cssCode = filesystem.getNPMFileContents(cssFilePath.replace('npm:', ''))
+                NPMFileCache[cssFilePath] = cssCode
+            }
+
+            return new Handlebars.SafeString((attributes ? `<style ${attributes}>` : `<style>`) + cssCode + '</style>')
+        }
+
+        /*-----------------------------------------------------------------------------
+         *  CSS file from `sourceDirectoryPath`
+         *----------------------------------------------------------------------------*/
         const cssStyles = compiledSassSourceFiles.find((file) => {
             return path.join(file.dir, file.base) === cssFilePath
         })
@@ -31,39 +54,64 @@ export function embeddedStyles(compiledSassSourceFiles: FileSystem.FileEntry[]) 
         }
 
         return new Handlebars.SafeString(
-            (data.hash.attributes ? `<style ${data.hash.attributes}>` : `<style>`) + cssStyles.contents + '</style>'
+            (attributes ? `<style ${attributes}>` : `<style>`) + cssStyles.contents + '</style>'
         )
     }
 }
 
 /** Embedded script injector helper.
  * @example
- * {{embeddedScript 'js/tooltip.js' attributes='async type="module"' }}
+ * {{embeddedScript "js/tooltip.js" attributes='async type="module"' }}
+ * {{embeddedScript "npm:bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" attributes='async type="module"' }}
  */
 export function embeddedScript(scriptSourceFiles: FileSystem.FileEntry[]) {
-    Handlebars.registerHelper('embeddedScript', embeddedScriptHelper)
+    const HELPER_NAME = 'embeddedScript'
+    Handlebars.registerHelper(HELPER_NAME, embeddedScriptHelper)
 
-    function embeddedScriptHelper(scriptFilePath: string, data: Handlebars.HelperOptions) {
+    function embeddedScriptHelper(scriptPath: string, data: Handlebars.HelperOptions) {
+        const { attributes } = data.hash as { attributes?: string }
+
+        /*-----------------------------------------------------------------------------
+         *  Script file from `node_modules`
+         *----------------------------------------------------------------------------*/
+        if (scriptPath.startsWith('npm:')) {
+            let scriptCode = NPMFileCache[scriptPath]
+
+            if (scriptCode === undefined) {
+                scriptCode = filesystem.getNPMFileContents(scriptPath.replace('npm:', ''))
+                NPMFileCache[scriptPath] = scriptCode
+            }
+
+            const resultScript = (attributes ? `<script ${attributes}>` : '<script>') + scriptCode + '</script>'
+
+            return new Handlebars.SafeString(resultScript)
+        }
+
+        /*-----------------------------------------------------------------------------
+         *  Script file from `sourceDirectoryPath`
+         *----------------------------------------------------------------------------*/
         const scriptFile = scriptSourceFiles.find((file) => {
-            return path.join(file.dir, file.base) === scriptFilePath
+            return path.join(file.dir, file.base) === scriptPath
         })
 
         if (!scriptFile) {
             logger.error(
-                `Script file ${filesystem.joinAndResolvePath(
+                `Script file "${filesystem.joinAndResolvePath(
                     configuration.distributionDirectoryPath,
-                    scriptFilePath
-                )} is not found.`
+                    scriptPath
+                )}" is not found.`
             )
             process.exit(1)
         }
 
-        return new Handlebars.SafeString(
-            (data.hash.attributes ? `<script ${data.hash.attributes}>` : '<script>') +
-                '(function () {\n' +
-                scriptFile.contents.trim() +
-                '\n})()</script>'
+        const scriptCode = scriptFile.contents.replace(
+            'Object.defineProperty(exports, "__esModule", { value: true });\n',
+            ''
         )
+
+        const resultScript = (attributes ? `<script ${attributes}>` : '<script>') + scriptCode + '</script>'
+
+        return new Handlebars.SafeString(resultScript)
     }
 }
 
