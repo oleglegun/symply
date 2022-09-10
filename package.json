@@ -26,6 +26,7 @@
     },
     "dependencies": {
         "chalk": "4.1.2",
+        "esbuild": "^0.14.48",
         "fs-extra": "10.0.1",
         "handlebars": "4.7.7",
         "html-minifier": "4.0.0",
